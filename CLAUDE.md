@@ -29,3 +29,5 @@ watermarks-remover engine through Pyodide. The plan and the status of each stage
 
 - Set up: `git submodule update --init && npm install`
 - Smoke test (Pyodide in Node): `npm run test:smoke`
+- Golden snapshots (needs `pip install -r tests/real-check/requirements.txt`): `npm run test:golden`; after an intended
+  change `UPDATE_GOLDEN=1 npm run test:golden` and review the diff of `tests/golden/expected/`
