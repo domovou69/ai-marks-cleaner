@@ -91,7 +91,7 @@ test("a long run shows a spinner and elapsed time, locks the buttons and can be 
   await expect(page.locator("#copy")).toBeDisabled();
 
   await page.locator("#text-cancel").click();
-  await expect(page.locator("#text-status")).toHaveText("Cancelled");
+  await expect(page.locator("#text-status")).toHaveText("");
   await expect(page.locator("#download-text")).toBeDisabled();
   await expect(page.locator("#text-cancel")).toBeHidden();
 
@@ -99,5 +99,27 @@ test("a long run shows a spinner and elapsed time, locks the buttons and can be 
   await expect(page.locator("#status-text")).toHaveText(/Ready/, { timeout: 90_000 });
   await page.locator("#input").fill("a\u200bb");
   await expect(page.locator("#text-status")).toContainText("Found");
+  await expect(page.locator("#download-text")).toBeEnabled();
+});
+
+test("cancelling a re-run after an option change restores the option and the previous result", async ({ page }) => {
+  await page.goto(SITE);
+  await expect(page.locator("#status-text")).toHaveText(/Ready/, { timeout: 90_000 });
+
+  // Long enough that a re-run takes a few seconds, short enough that the first run finishes.
+  // Real prose with a zero-width space after every word: about 1.5 s per run for 1000 words.
+  const words = readFileSync("PLAN.md", "utf8").split(/\s+/).filter(Boolean).slice(0, 1000);
+  await page.locator("#input").fill(words.map((w) => `${w}\u200b`).join(" "));
+  await expect(page.locator("#text-status")).toContainText("Found", { timeout: 60_000 });
+  const before = await page.locator("#text-status").innerText();
+
+  const option = page.locator('input[data-option="normalize_spaces"]');
+  await option.check();
+  await expect(page.locator("#text-status")).toContainText("Cleaning…", { timeout: 10_000 });
+  await page.locator("#text-cancel").click();
+
+  await expect(option).not.toBeChecked();
+  await expect(page.locator("#text-status")).toHaveText(before);
+  await expect(page.locator("#preview mark").first()).toBeVisible();
   await expect(page.locator("#download-text")).toBeEnabled();
 });
