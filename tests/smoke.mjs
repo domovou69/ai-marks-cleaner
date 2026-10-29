@@ -93,10 +93,33 @@ z = zipfile.ZipFile(io.BytesIO(r["data"]))
 assert z.testzip() is None
 body = z.read("${marker}").decode()
 core = z.read("docProps/core.xml").decode() if "docProps/core.xml" in z.namelist() else ""
-(("\\u200b" in body), ("ChatGPT" in core), ("\\u00a0" in body), len(r["notes"]) > 0)
+(("\\u200b" in body), ("ChatGPT" in core), ("\\u00a0" in body), len(r["notes"]) > 0, engine.clean_file("Test.${name.toUpperCase()}", r["data"])["notes"])
 `).toJs();
-  assert.deepEqual(out, [false, false, name === "docx", true], `${name}: ${out}`);
+  // Cleaning the result again reports nothing; the page counts every note as a change.
+  assert.deepEqual(out, [false, false, name === "docx", true, []], `${name}: ${out}`);
   console.log(`ok ${name}`);
 }
 assert.throws(() => py.runPython(`engine.clean_file("a.pdf", b"")`), /unsupported/);
+
+// Excel table: the column name is cleaned like its header cell (Excel repairs a file where they differ), the page
+// gets a note for it, and cleaning the result again reports nothing (no "no ... removed" note counted as a change).
+const table = py.runPython(`
+S = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+TABLE = make({
+    "xl/sharedStrings.xml": f'<?xml version="1.0"?><sst {S}><si><t>\u0418\u043c\u044f{ZW}</t></si></sst>',
+    "xl/tables/table1.xml": f"""<?xml version="1.0"?><table {S} id="1" name="T" ref="A1:A2"><tableColumns count="2"><tableColumn id="1" name="\u0418\u043c\u044f{ZW}"/><tableColumn id="2" name="a &amp; &quot;b&quot;{ZW}"/><tableColumn id="3" name='c{ZW}'/><tableColumn id="4" name="d&#x200B;"/></tableColumns></table>""",
+})
+first = engine.clean_file("t.xlsx", TABLE)
+second = engine.clean_file("t.xlsx", first["data"])
+z = zipfile.ZipFile(io.BytesIO(first["data"]))
+(z.read("xl/tables/table1.xml").decode(), "clean table column names x4" in first["notes"], second["notes"], second["data"] == first["data"])
+`).toJs();
+assert.match(table[0], /name="\u0418\u043c\u044f"\/>/);
+assert.match(table[0], /name="a &amp; &quot;b&quot;"\/>/);
+assert.match(table[0], /name="c"\/>/);
+assert.match(table[0], /name="d"\/>/);
+assert.equal(table[1], true);
+assert.deepEqual(table[2], []);
+assert.equal(table[3], true);
+console.log("ok table");
 console.log("ok text");
