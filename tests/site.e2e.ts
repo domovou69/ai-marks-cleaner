@@ -27,7 +27,8 @@ test("cleans pasted text and an Office file on the built site, offline, with no 
   // Office: switches other than "Normalize spaces" are greyed out, the report lists notes, the download is a valid ZIP.
   await page.locator("#file").setInputFiles("tests/fixtures/sample.docx");
   await expect(page.locator("#file-result")).toBeVisible();
-  await expect(page.locator("#notes li").first()).not.toHaveText("Nothing to remove.");
+  await expect(page.locator("#verdict")).toContainText("Found");
+  expect(await page.locator("#notes li").count()).toBeGreaterThan(0);
   await expect(page.locator('input[data-option="nfkc"]')).toBeDisabled();
   await expect(page.locator('input[data-option="normalize_spaces"]')).toBeEnabled();
   const fileDownload = page.waitForEvent("download");
@@ -41,7 +42,7 @@ test("cleans pasted text and an Office file on the built site, offline, with no 
   // Legacy format is rejected with a message.
   await page.locator("#file-remove").click();
   await page.locator("#file").setInputFiles({ name: "old.doc", mimeType: "application/msword", buffer: Buffer.from("x") });
-  await expect(page.locator("#error")).toContainText("old binary Office format");
+  await expect(page.locator("#file-error")).toContainText("old binary Office format");
 
   // Offline: after a reload the service worker serves the whole app, engine included.
   await page.evaluate(() => navigator.serviceWorker.ready);
