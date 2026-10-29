@@ -26,10 +26,10 @@
     <p class="hint">Invisible characters are always removed. These switches can change legitimate text, so they are off by default.</p>
     <div class="options">
       <label title="Turns no-break spaces and U+202F into plain spaces."><input type="checkbox" data-option="normalize_spaces"> Normalize spaces</label>
-      <label title="Folds look-alike forms (full-width letters, ligatures) into plain ones."><input type="checkbox" data-option="nfkc"> Unicode NFKC</label>
-      <label title="Replaces look-alike letters with Latin ones."><input type="checkbox" data-option="aggressive_homoglyphs"> Replace homoglyphs</label>
-      <label title="Removes zero-width joiners inside emoji."><input type="checkbox" data-option="strip_emoji_glue"> Strip emoji joiners</label>
-      <label title="Removes bidirectional control characters."><input type="checkbox" data-option="strip_bidi"> Strip direction marks</label>
+      <label title="Folds look-alike forms (full-width letters, ligatures) into plain ones."><input type="checkbox" data-option="nfkc"> Unicode NFKC <span class="tag">text only</span></label>
+      <label title="Replaces look-alike letters with Latin ones."><input type="checkbox" data-option="aggressive_homoglyphs"> Replace homoglyphs <span class="tag">text only</span></label>
+      <label title="Removes zero-width joiners inside emoji."><input type="checkbox" data-option="strip_emoji_glue"> Strip emoji joiners <span class="tag">text only</span></label>
+      <label title="Removes bidirectional control characters."><input type="checkbox" data-option="strip_bidi"> Strip direction marks <span class="tag">text only</span></label>
     </div>
     <details>
       <summary>What do these do?</summary>
@@ -41,52 +41,59 @@
         <dt>Strip direction marks</dt><dd>Right-to-left text may display wrongly afterwards.</dd>
       </dl>
     </details>
-    <p id="office-note" class="hint" hidden>For Office files only “Normalize spaces” applies; the other switches work on text only.</p>
+    <p class="hint">For Office files only “Normalize spaces” applies; switches marked “text only” work on pasted text and text files.</p>
   </section>
 
   <section class="card">
-    <div id="dropzone">
-      <label for="file">Choose a file (.docx, .xlsx, .pptx, or a text file up to 50 MB), or drop it here:</label>
-      <input type="file" id="file">
+    <h2>File <small>(.docx, .xlsx, .pptx)</small></h2>
+    <div class="workspace">
+      <div class="pane">
+        <div id="dropzone">
+          <label for="file">Choose a file or drop it here (up to 50 MB). Plain-text files open in the text section below.</label>
+          <input type="file" id="file">
+        </div>
+        <div id="file-card" hidden>
+          <strong id="file-name"></strong> <span id="file-size"></span>
+          <button type="button" id="file-remove">Remove file</button>
+        </div>
+        <p id="file-error" class="error" role="alert" hidden></p>
+      </div>
+      <div class="pane" aria-live="polite">
+        <p id="file-empty" class="placeholder">The report for the cleaned file appears here.</p>
+        <p id="file-verdict" hidden></p>
+        <div id="file-result" hidden>
+          <p id="file-summary" class="hint"></p>
+          <ul id="notes"></ul>
+          <div class="actions">
+            <button type="button" id="download-file">Download cleaned file</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <p id="file-error" class="error" role="alert" hidden></p>
   </section>
 
-  <div class="workspace">
-    <section class="pane">
-      <h2>Input</h2>
-      <div id="text-mode">
+  <section class="card">
+    <h2>Text</h2>
+    <div class="workspace">
+      <div class="pane">
         <label for="input" class="visually-hidden">Text to clean</label>
-        <textarea id="input" placeholder="Or paste text here" spellcheck="false"></textarea>
+        <textarea id="input" placeholder="Paste text here" spellcheck="false"></textarea>
       </div>
-      <div id="file-card" hidden>
-        <strong id="file-name"></strong> <span id="file-size"></span>
-        <button type="button" id="file-remove">Remove file</button>
-      </div>
-    </section>
-
-    <section class="pane" aria-live="polite">
-      <h2>Result</h2>
-      <p id="error" class="error" role="alert" hidden></p>
-      <p id="empty" class="placeholder">The cleaned result appears here.</p>
-      <p id="verdict" hidden></p>
-      <div id="text-result" hidden>
-        <pre id="preview"></pre>
-        <p class="hint">Red marks show what was removed from the input.</p>
-        <div class="actions">
-          <button type="button" id="copy">Copy cleaned text</button>
-          <button type="button" id="download-text">Download</button>
+      <div class="pane" aria-live="polite">
+        <p id="text-error" class="error" role="alert" hidden></p>
+        <p id="text-empty" class="placeholder">The cleaned text appears here.</p>
+        <p id="text-verdict" hidden></p>
+        <div id="text-result" hidden>
+          <pre id="preview"></pre>
+          <p class="hint">Red marks show what was removed from the input.</p>
+          <div class="actions">
+            <button type="button" id="copy">Copy cleaned text</button>
+            <button type="button" id="download-text">Download</button>
+          </div>
         </div>
       </div>
-      <div id="file-result" hidden>
-        <p id="file-summary" class="hint"></p>
-        <ul id="notes"></ul>
-        <div class="actions">
-          <button type="button" id="download-file">Download cleaned file</button>
-        </div>
-      </div>
-    </section>
-  </div>
+    </div>
+  </section>
 
   <footer>
     <a href="./about.html">About and credits</a> ·
