@@ -1,0 +1,41 @@
+name: CI
+
+# Pull requests only: main is deployed by pages.yml, which runs the same tests before it publishes.
+# workflow_dispatch exists because a PR opened by the upstream-release workflow (with the default token) does not
+# start pull_request workflows; that workflow dispatches this one on the PR branch instead.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run test:patches
+      - run: npm run test:smoke
+      - run: npx playwright install --with-deps chromium
+      # Builds the site, serves it and runs the e2e tests against the built files.
+      - run: npm run test:e2e
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: ignore

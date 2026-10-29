@@ -4,8 +4,12 @@ import { readFileSync } from "node:fs";
 const SITE = "/ai-marks-cleaner/";
 
 test("cleans pasted text and an Office file on the built site, offline, with no foreign requests", async ({ page, context }) => {
+  // context.on, not page.on: the page event misses requests made by the Worker and the service worker
+  // (the meta CSP does not cover those either, so this check is what enforces "no foreign requests").
   const foreign: string[] = [];
-  page.on("request", (r) => {
+  const seen: string[] = [];
+  context.on("request", (r) => {
+    seen.push(r.url());
     if (!r.url().startsWith("http://localhost:4173/") && !r.url().startsWith("blob:") && !r.url().startsWith("data:")) {
       foreign.push(r.url());
     }
@@ -46,6 +50,9 @@ test("cleans pasted text and an Office file on the built site, offline, with no 
   expect(download.suggestedFilename()).toBe("sample.cleaned.docx");
   const bytes = readFileSync((await download.path())!);
   expect(bytes.subarray(0, 2).toString()).toBe("PK");
+  // The end-of-central-directory record is intact and the package still lists its content types part.
+  expect(bytes.includes(Buffer.from([0x50, 0x4b, 0x05, 0x06]))).toBe(true);
+  expect(bytes.includes(Buffer.from("[Content_Types].xml"))).toBe(true);
   expect(bytes.includes(Buffer.from("​"))).toBe(false);
 
   // Legacy format is rejected with a message.
@@ -70,6 +77,9 @@ test("cleans pasted text and an Office file on the built site, offline, with no 
   await page.locator("#input").fill("a​b");
   await expect(page.locator("#preview mark")).toHaveCount(1);
 
+  // The engine files are fetched by the Worker, so seeing them proves the listener covers the Worker's requests.
+  expect(seen.some((u) => u.endsWith("/pyodide/pyodide.asm.wasm"))).toBe(true);
+  expect(seen.some((u) => u.endsWith("/engine/engine.py"))).toBe(true);
   expect(foreign).toEqual([]);
 });
 
