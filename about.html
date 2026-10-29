@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>About — AI Marks Cleaner</title>
+  <meta name="theme-color" content="#b3261e">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <header>
+    <h1>About</h1>
+    <nav><a href="./">Back to the cleaner</a></nav>
+  </header>
+
+  <h2>What it does</h2>
+  <p>AI Marks Cleaner removes AI provenance marks from pasted text, plain-text files and DOCX / XLSX / PPTX files:
+    zero-width and other invisible characters, and document properties, custom XML and add-in metadata that name the
+    tool that produced the file. It does not touch statistical watermarks in word choice, images, audio or PDF.</p>
+
+  <h2>Privacy</h2>
+  <p>All processing runs in your browser, on your device. The page makes no requests to other sites: no CDN, no
+    analytics. After the first load it is cached and also works without a network. The source code is public, so
+    this can be checked.</p>
+
+  <h2>Authors and credits</h2>
+  <ul>
+    <li>Site and adapter: <a href="https://github.com/domovou69">Mikhail Yesipchuk</a> (MIT).</li>
+    <li>Cleaning engine: <a href="https://github.com/guillaumemeyer/watermarks-remover">watermarks-remover</a>
+      by Guillaume Meyer (MIT). Its license ships with the engine files:
+      <a href="./engine/LICENSE">engine/LICENSE</a>.</li>
+    <li>Python in the browser: <a href="https://pyodide.org">Pyodide</a> (MPL-2.0), which includes CPython (PSF License).
+      License text: <a href="./licenses/pyodide-LICENSE">pyodide-LICENSE</a>.</li>
+    <li>Build tools: Vite, vite-plugin-pwa (Workbox), TypeScript — all MIT.</li>
+  </ul>
+  <p>Full list: <a href="./licenses/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES</a>.</p>
+
+  <footer><a href="https://github.com/domovou69/ai-marks-cleaner">Source on GitHub</a></footer>
+</body>
+</html>

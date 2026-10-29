@@ -1,0 +1,78 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #1c1b1f;
+  --muted: #5f5b66;
+  --border: #cac4d0;
+  --accent: #b3261e;
+  --removed-bg: #fbd5d2;
+  --removed-fg: #8c1d18;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17151a;
+    --fg: #e6e1e9;
+    --muted: #a39fab;
+    --border: #49454f;
+    --accent: #f2b8b5;
+    --removed-bg: #5c2a27;
+    --removed-fg: #ffd9d6;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0 auto;
+  max-width: 52rem;
+  padding: 1rem 1rem 3rem;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 system-ui, sans-serif;
+}
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+h1 { font-size: 1.6rem; margin: 0.5rem 0; }
+h2 { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+h3 { font-size: 1rem; margin: 1rem 0 0.25rem; }
+a { color: var(--accent); }
+.lead, .hint, small { color: var(--muted); }
+.hint { margin: 0.25rem 0 0.75rem; }
+small { display: block; font-size: 0.85rem; }
+.options { display: grid; gap: 0.5rem; }
+.options label { display: block; }
+.options label.disabled { opacity: 0.5; }
+textarea, pre {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: 0.95rem/1.5 ui-monospace, monospace;
+}
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 24rem; overflow: auto; }
+mark {
+  background: var(--removed-bg);
+  color: var(--removed-fg);
+  border-radius: 3px;
+  padding: 0 2px;
+  font-size: 0.8em;
+}
+button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+.actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+#dropzone { margin-top: 0.75rem; padding: 0.75rem; border: 2px dashed var(--border); border-radius: 8px; }
+#dropzone.over { border-color: var(--accent); }
+#dropzone label { display: block; margin-bottom: 0.5rem; }
+#file-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; }
+#status { display: flex; align-items: center; gap: 0.75rem; }
+#error { padding: 0.75rem; border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+footer { margin-top: 2rem; color: var(--muted); }
+[hidden] { display: none !important; }
