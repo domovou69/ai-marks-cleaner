@@ -6,7 +6,6 @@ the caller puts their directory on sys.path before importing this module.
 
 from __future__ import annotations
 
-import html
 import io
 import re
 import zipfile
@@ -90,7 +89,7 @@ def _clean_table_columns(data: bytes, normalize_spaces: bool) -> tuple[bytes, in
     def fix(match: re.Match[str]) -> str:
         nonlocal changed
         raw = match.group(2) if match.group(2) is not None else match.group(3)
-        name = html.unescape(raw)
+        name = container_meta._decode_xml_entities(raw)  # the decoder upstream uses for the header cells
         cleaned, _ = text_unicode.clean_text(name, normalize_spaces=normalize_spaces)
         if cleaned == name:
             return match.group(0)
@@ -103,7 +102,10 @@ def _clean_table_columns(data: bytes, normalize_spaces: bool) -> tuple[bytes, in
         for info in zin.infolist():
             if not _TABLE_PART.match(info.filename):
                 continue
-            xml = zin.read(info.filename).decode("utf-8")
+            try:
+                xml = zin.read(info.filename).decode("utf-8")
+            except UnicodeDecodeError:
+                continue  # not UTF-8: leave the part as it is rather than fail the whole file
             new = _COLUMN_NAME.sub(fix, xml)
             if new != xml:
                 rewritten[info.filename] = new.encode("utf-8")
