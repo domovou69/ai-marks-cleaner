@@ -8,6 +8,8 @@ REPO="guillaumemeyer/watermarks-remover"
 DRY_RUN="${DRY_RUN:-false}"
 summary() { echo "$1" | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"; }
 
+# actions/checkout fetches the submodule at depth 1 without tags, so get them before looking the pinned tag up.
+git -C upstream fetch --quiet --tags origin
 current="$(git -C upstream describe --tags --exact-match HEAD)"
 latest="$(gh api "repos/$REPO/releases/latest" --jq .tag_name)"
 echo "pinned: $current, latest release: $latest"
@@ -23,7 +25,6 @@ if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
   exit 0
 fi
 
-git -C upstream fetch --quiet --tags origin
 git -C upstream checkout --quiet "$latest"
 body="Moves \`upstream/\` from \`$current\` to \`$latest\`.
 
