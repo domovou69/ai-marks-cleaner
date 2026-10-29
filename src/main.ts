@@ -1,5 +1,5 @@
 import { registerSW } from "virtual:pwa-register";
-import { CANCELLED, EngineClient } from "./client";
+import { EngineClient } from "./client";
 import { segments } from "./preview";
 import type { FileResult, Options, TextResult } from "./protocol";
 
@@ -15,6 +15,10 @@ const preview = $("preview");
 
 // The text and the file sections are independent: each has its own source, result and run counter.
 type Section = "text" | "file";
+type Status = { state: "ok" | "found" | "error"; message: string };
+/** What the page shows now: the status, the options that produced it, and the input it belongs to. */
+type Shown = { status: Status; options: Options; source: string | ArrayBuffer };
+const shown: Record<Section, Shown | null> = { text: null, file: null };
 let textFileName: string | null = null; // set when a plain-text file was opened into the text section
 let lastText: TextResult | null = null;
 let officeFile: { name: string; bytes: ArrayBuffer } | null = null;
@@ -42,7 +46,7 @@ function setError(id: "text-error" | "file-error", message: string | null) {
  * Writes the status next to the "Result" title and colours the result box through data-state. The header row has a
  * fixed height and the box a fixed border width, so nothing moves when a result appears. Null clears both.
  */
-function setStatus(section: Section, status: { state: "ok" | "found" | "error"; message: string } | null) {
+function setStatus(section: Section, status: Status | null) {
   stopBusy(section);
   const line = $(`${section}-status`);
   line.className = status ? `status ${status.state}` : "status";
@@ -137,7 +141,7 @@ function watchEngine() {
 }
 watchEngine();
 
-function renderText(original: string, r: TextResult) {
+function renderText(original: string, r: TextResult, used: Options) {
   lastText = r;
   preview.replaceChildren(
     ...segments(original, r.changes).map((s) => {
@@ -148,16 +152,19 @@ function renderText(original: string, r: TextResult) {
     }),
   );
   const n = r.changes.length;
-  setStatus("text", {
+  const status: Status = {
     state: n > 0 ? "found" : "ok",
     message: n === 0 ? "Clean — nothing to remove." : `Found — ${plural(n, "place")} changed, ${plural(r.removed, "character")} removed.`,
-  });
+  };
+  setStatus("text", status);
+  shown.text = { status, options: used, source: original };
   $<HTMLButtonElement>("copy").disabled = false;
   $<HTMLButtonElement>("download-text").disabled = false;
 }
 
 function clearText() {
   lastText = null;
+  shown.text = null;
   setStatus("text", null);
   const hint = document.createElement("span");
   hint.className = "placeholder";
@@ -167,7 +174,8 @@ function clearText() {
   $<HTMLButtonElement>("download-text").disabled = true;
 }
 
-function renderFile(name: string, before: number, r: FileResult) {
+function renderFile(name: string, source: ArrayBuffer, r: FileResult, used: Options) {
+  const before = source.byteLength;
   lastFile = { name, result: r };
   const summary = $("file-summary");
   summary.className = "hint";
@@ -179,15 +187,18 @@ function renderFile(name: string, before: number, r: FileResult) {
       return li;
     }),
   );
-  setStatus("file", {
+  const status: Status = {
     state: r.notes.length > 0 ? "found" : "ok",
     message: r.notes.length === 0 ? "Clean — nothing to remove." : `Found — ${plural(r.notes.length, "change")} made to the file.`,
-  });
+  };
+  setStatus("file", status);
+  shown.file = { status, options: used, source };
   $<HTMLButtonElement>("download-file").disabled = false;
 }
 
 function clearFile() {
   lastFile = null;
+  shown.file = null;
   setStatus("file", null);
   const summary = $("file-summary");
   summary.className = "placeholder";
@@ -203,10 +214,11 @@ async function processText() {
   if (text === "") return clearText();
   startBusy("text", false);
   try {
-    const r = await engine.cleanText(text, options());
+    const used = options();
+    const r = await engine.cleanText(text, used);
     if (mine !== textRun) return;
     stopBusy("text");
-    renderText(text, r);
+    renderText(text, r, used);
   } catch (e) {
     if (mine !== textRun) return; // superseded or cancelled
     lastText = null;
@@ -221,10 +233,11 @@ async function processFile() {
   startBusy("file", true);
   const { name, bytes } = officeFile;
   try {
-    const r = await engine.cleanFile(name, bytes.slice(0), options());
+    const used = options();
+    const r = await engine.cleanFile(name, bytes.slice(0), used);
     if (mine !== fileRun) return;
     stopBusy("file");
-    renderFile(name, bytes.byteLength, r);
+    renderFile(name, bytes, r, used);
   } catch (e) {
     if (mine !== fileRun) return; // superseded or cancelled
     clearFile();
@@ -233,7 +246,10 @@ async function processFile() {
   }
 }
 
-/** Ends whatever runs: the engine restarts and every section that was busy drops its run. */
+/**
+ * Ends whatever runs (the engine restarts). A section whose old result still matches its input keeps that result and
+ * the options that produced it, so the checkboxes and the result never disagree; any other section is cleared.
+ */
 function cancel() {
   const running = (["text", "file"] as const).filter((s) => busy[s]);
   textRun++;
@@ -241,11 +257,17 @@ function cancel() {
   engine.cancel();
   watchEngine();
   setLoadStatus("Restarting the engine…", true);
+  let restored: Options | null = null;
   for (const section of running) {
-    if (section === "file") removeFile();
+    const prev = shown[section];
+    const current = section === "text" ? input.value : officeFile?.bytes;
+    if (prev && prev.source === current) {
+      setStatus(section, prev.status);
+      restored = prev.options;
+    } else if (section === "file") removeFile();
     else clearText();
-    setStatus(section, { state: "error", message: CANCELLED });
   }
+  if (restored) for (const box of checkboxes) box.checked = restored[box.dataset.option as keyof Options];
 }
 
 // Typing and quick option clicks are merged into one run; a long file is never queued behind a pile of stale runs.

@@ -38,8 +38,30 @@ def _options(options: dict[str, Any] | None) -> dict[str, bool]:
     return merged
 
 
+def _deletions(before: str, after: str) -> list[dict[str, Any]] | None:
+    """Removed spans when `after` is `before` with characters deleted, else None. One pass, linear time."""
+    spans: list[dict[str, Any]] = []
+    start = None
+    j = 0
+    for i, ch in enumerate(before):
+        if j < len(after) and ch == after[j]:
+            j += 1
+            if start is not None:
+                spans.append({"start": start, "end": i, "replacement": ""})
+                start = None
+        elif start is None:
+            start = i
+    if start is not None:
+        spans.append({"start": start, "end": len(before), "replacement": ""})
+    return spans if j == len(after) else None
+
+
 def _changes(before: str, after: str) -> list[dict[str, Any]]:
     """Spans of `before` that were removed or replaced, for the preview."""
+    deleted = _deletions(before, after)
+    if deleted is not None:
+        return deleted
+    # Replacements (normalize_spaces, nfkc, homoglyphs): a general diff, slow on long texts with many changes.
     return [
         {"start": i1, "end": i2, "replacement": after[j1:j2]}
         for op, i1, i2, j1, j2 in SequenceMatcher(None, before, after, autojunk=False).get_opcodes()
