@@ -26,10 +26,10 @@
     <p class="hint">Invisible characters are always removed. These switches can change legitimate text, so they are off by default.</p>
     <div class="options">
       <label title="Turns no-break spaces and U+202F into plain spaces."><input type="checkbox" data-option="normalize_spaces"> Normalize spaces</label>
-      <label title="Folds look-alike forms (full-width letters, ligatures) into plain ones."><input type="checkbox" data-option="nfkc"> Unicode NFKC <span class="tag">text only</span></label>
-      <label title="Replaces look-alike letters with Latin ones."><input type="checkbox" data-option="aggressive_homoglyphs"> Replace homoglyphs <span class="tag">text only</span></label>
-      <label title="Removes zero-width joiners inside emoji."><input type="checkbox" data-option="strip_emoji_glue"> Strip emoji joiners <span class="tag">text only</span></label>
-      <label title="Removes bidirectional control characters."><input type="checkbox" data-option="strip_bidi"> Strip direction marks <span class="tag">text only</span></label>
+      <label title="Folds look-alike forms (full-width letters, ligatures) into plain ones."><input type="checkbox" data-option="nfkc"> Unicode NFKC <span class="tag">text + .txt</span></label>
+      <label title="Replaces look-alike letters with Latin ones."><input type="checkbox" data-option="aggressive_homoglyphs"> Replace homoglyphs <span class="tag">text + .txt</span></label>
+      <label title="Removes zero-width joiners inside emoji."><input type="checkbox" data-option="strip_emoji_glue"> Strip emoji joiners <span class="tag">text + .txt</span></label>
+      <label title="Removes bidirectional control characters."><input type="checkbox" data-option="strip_bidi"> Strip direction marks <span class="tag">text + .txt</span></label>
     </div>
     <details>
       <summary>What do these do?</summary>
@@ -41,16 +41,16 @@
         <dt>Strip direction marks</dt><dd>Right-to-left text may display wrongly afterwards.</dd>
       </dl>
     </details>
-    <p class="hint">For Office files only “Normalize spaces” applies; switches marked “text only” work on pasted text and text files.</p>
+    <p class="hint">For Office files only “Normalize spaces” applies; switches marked “text + .txt” work on pasted text and text files only.</p>
   </section>
 
   <section class="card" id="file-section">
-    <h2>File <small>(.docx, .xlsx, .pptx)</small></h2>
-    <p id="file-status" class="status" aria-live="polite"></p>
+    <h2>File <small>(.docx, .xlsx, .pptx; text files such as .txt open in the Text section below)</small></h2>
     <div class="workspace">
       <div class="pane">
-        <div id="dropzone" class="stateful">
-          <label for="file">Choose a file or drop it here (up to 50 MB). Plain-text files open in the text section below.</label>
+        <div class="pane-head"><h3>Input</h3></div>
+        <div id="dropzone" class="box">
+          <label for="file">Choose a file or drop it here (up to 50 MB).</label>
           <input type="file" id="file">
         </div>
         <div id="file-card" hidden>
@@ -60,7 +60,8 @@
         <p id="file-error" class="error" role="alert" hidden></p>
       </div>
       <div class="pane">
-        <div id="file-result" class="result-box stateful">
+        <div class="pane-head"><h3>Result</h3><span id="file-status" class="status" aria-live="polite"></span></div>
+        <div id="file-result" class="box result-box">
           <p id="file-summary" class="placeholder">The report for the cleaned file appears here.</p>
           <ul id="notes"></ul>
         </div>
@@ -72,15 +73,16 @@
   </section>
 
   <section class="card" id="text-section">
-    <h2>Text</h2>
-    <p id="text-status" class="status" aria-live="polite"></p>
+    <h2>Text <small>(pasted, or a text file such as .txt)</small></h2>
     <div class="workspace">
       <div class="pane">
+        <div class="pane-head"><h3>Input</h3></div>
         <label for="input" class="visually-hidden">Text to clean</label>
-        <textarea id="input" class="stateful" placeholder="Paste text here" spellcheck="false"></textarea>
+        <textarea id="input" class="box" placeholder="Paste text here" spellcheck="false"></textarea>
       </div>
       <div class="pane">
-        <pre id="preview" class="stateful"><span class="placeholder">The cleaned text appears here.</span></pre>
+        <div class="pane-head"><h3>Result</h3><span id="text-status" class="status" aria-live="polite"></span></div>
+        <pre id="preview" class="box"><span class="placeholder">The cleaned text appears here.</span></pre>
         <p class="hint">Red marks show what was removed from the input.</p>
         <div class="actions">
           <button type="button" id="copy" disabled>Copy cleaned text</button>

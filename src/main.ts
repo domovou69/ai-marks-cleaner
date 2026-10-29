@@ -38,16 +38,17 @@ function setError(id: "text-error" | "file-error", message: string | null) {
 }
 
 /**
- * Writes the status line under a section title and colours the section's boxes through data-state. Both always
- * take the same space, so nothing moves when a result appears. Null clears both.
+ * Writes the status next to the "Result" title and colours the result box through data-state. The header row has a
+ * fixed height and the box a fixed border width, so nothing moves when a result appears. Null clears both.
  */
 function setStatus(section: "text" | "file", status: { state: "ok" | "found"; message: string } | null) {
   const line = $(`${section}-status`);
   line.className = status ? `status ${status.state}` : "status";
-  line.textContent = status ? `${status.state === "ok" ? "✓" : "!"} ${status.message}` : "";
-  const card = $(`${section}-section`);
-  if (status) card.dataset.state = status.state;
-  else delete card.dataset.state;
+  line.textContent = status?.message ?? "";
+  line.title = status?.message ?? "";
+  const box = $(section === "text" ? "preview" : "file-result");
+  if (status) box.dataset.state = status.state;
+  else delete box.dataset.state;
 }
 
 function options(): Options {

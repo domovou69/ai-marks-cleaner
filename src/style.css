@@ -92,14 +92,16 @@ mark {
   font-size: 0.8em;
 }
 .placeholder { color: var(--muted); margin: 0; }
-/* The status line always takes its height, so a result appearing never moves the page. */
-.status { min-height: 1.4rem; margin: 0 0 0.5rem; font-size: 0.85rem; font-weight: 600; }
+/* Each pane has a header row of fixed height, so the boxes line up and a status never moves anything. */
+.pane-head { display: flex; align-items: baseline; gap: 0.75rem; height: 1.7rem; }
+.pane-head h3 { margin: 0; font-size: 1rem; }
+.status { flex: 1; min-width: 0; text-align: right; font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .status.ok { color: var(--ok-fg); }
 .status.found { color: var(--found-fg); }
-/* Every boxed part of a section has the same 2px border; only its colour changes with the result. */
-.stateful { border: 2px solid var(--border); border-radius: 8px; }
-[data-state="ok"] .stateful { border-color: var(--ok-line); }
-[data-state="found"] .stateful { border-color: var(--accent); }
+/* Every box has the same 2px border; only the result box changes colour with the result. */
+.box { border: 2px solid var(--border); border-radius: 8px; }
+.box[data-state="ok"] { border-color: var(--ok-line); }
+.box[data-state="found"] { border-color: var(--accent); }
 .result-box { min-height: 9rem; padding: 0.75rem; background: var(--bg); }
 .error { margin: 0.5rem 0 0; padding: 0.7rem 0.9rem; border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); }
 #notes { margin: 0.25rem 0; padding-left: 1.25rem; }
@@ -120,6 +122,3 @@ button:disabled { opacity: 0.45; cursor: default; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 footer { margin-top: 1.5rem; color: var(--muted); }
 [hidden] { display: none !important; }
-@media (max-width: 40rem) {
-  .status { min-height: 2.6rem; } /* room for two lines, so a longer message does not push the page */
-}
