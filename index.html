@@ -60,7 +60,7 @@
         <p id="file-error" class="error" role="alert" hidden></p>
       </div>
       <div class="pane">
-        <div class="pane-head"><h3>Result</h3><span id="file-status" class="status" aria-live="polite"></span></div>
+        <div class="pane-head"><h3>Result</h3><span id="file-status" class="status" aria-live="polite"></span><button type="button" id="file-cancel" class="small" hidden>Cancel</button></div>
         <div id="file-result" class="box result-box">
           <p id="file-summary" class="placeholder">The report for the cleaned file appears here.</p>
           <ul id="notes"></ul>
@@ -81,7 +81,7 @@
         <textarea id="input" class="box" placeholder="Paste text here" spellcheck="false"></textarea>
       </div>
       <div class="pane">
-        <div class="pane-head"><h3>Result</h3><span id="text-status" class="status" aria-live="polite"></span></div>
+        <div class="pane-head"><h3>Result</h3><span id="text-status" class="status" aria-live="polite"></span><button type="button" id="text-cancel" class="small" hidden>Cancel</button></div>
         <pre id="preview" class="box"><span class="placeholder">The cleaned text appears here.</span></pre>
         <p class="hint">Red marks show what was removed from the input.</p>
         <div class="actions">

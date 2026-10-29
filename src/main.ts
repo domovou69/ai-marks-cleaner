@@ -1,5 +1,5 @@
 import { registerSW } from "virtual:pwa-register";
-import { EngineClient } from "./client";
+import { CANCELLED, EngineClient } from "./client";
 import { segments } from "./preview";
 import type { FileResult, Options, TextResult } from "./protocol";
 
@@ -14,6 +14,7 @@ const input = $<HTMLTextAreaElement>("input");
 const preview = $("preview");
 
 // The text and the file sections are independent: each has its own source, result and run counter.
+type Section = "text" | "file";
 let textFileName: string | null = null; // set when a plain-text file was opened into the text section
 let lastText: TextResult | null = null;
 let officeFile: { name: string; bytes: ArrayBuffer } | null = null;
@@ -31,7 +32,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /** File problems show under the chooser; text problems use the status line. */
 function setError(id: "text-error" | "file-error", message: string | null) {
-  if (id === "text-error") return setStatus("text", message === null ? null : { state: "found", message });
+  if (id === "text-error") return setStatus("text", message === null ? null : { state: "error", message });
   const box = $(id);
   box.hidden = message === null;
   box.textContent = message ?? "";
@@ -41,14 +42,71 @@ function setError(id: "text-error" | "file-error", message: string | null) {
  * Writes the status next to the "Result" title and colours the result box through data-state. The header row has a
  * fixed height and the box a fixed border width, so nothing moves when a result appears. Null clears both.
  */
-function setStatus(section: "text" | "file", status: { state: "ok" | "found"; message: string } | null) {
+function setStatus(section: Section, status: { state: "ok" | "found" | "error"; message: string } | null) {
+  stopBusy(section);
   const line = $(`${section}-status`);
   line.className = status ? `status ${status.state}` : "status";
   line.textContent = status?.message ?? "";
   line.title = status?.message ?? "";
   const box = $(section === "text" ? "preview" : "file-result");
-  if (status) box.dataset.state = status.state;
+  if (status && status.state !== "error") box.dataset.state = status.state;
   else delete box.dataset.state;
+}
+
+// ---- Busy state -----------------------------------------------------------------------------------------------
+// A run that takes longer than SPINNER_DELAY shows a spinner and the elapsed time in the Result header, dims the old
+// result and disables its buttons. Shorter runs stay instant, without flicker.
+const SPINNER_DELAY = 300;
+const ACTION_BUTTONS: Record<Section, string[]> = { text: ["copy", "download-text"], file: ["download-file"] };
+type Busy = { start: number; delay: number; tick?: number };
+const busy: Record<Section, Busy | null> = { text: null, file: null };
+let engineReady = false;
+
+const setActions = (section: Section, enabled: boolean) => {
+  for (const id of ACTION_BUTTONS[section]) $<HTMLButtonElement>(id).disabled = !enabled;
+};
+const hasResult = (section: Section) => (section === "text" ? lastText !== null : lastFile !== null);
+const resultBox = (section: Section) => $(section === "text" ? "preview" : "file-result");
+
+function showBusy(section: Section) {
+  const b = busy[section];
+  if (!b) return;
+  const label = document.createTextNode("");
+  const paint = () => {
+    const seconds = Math.floor((Date.now() - b.start) / 1000);
+    label.data = `${engineReady ? "Cleaning…" : "Waiting for the engine…"}${seconds >= 1 ? ` ${seconds} s` : ""}`;
+  };
+  paint();
+  const spinner = document.createElement("span");
+  spinner.className = "spinner";
+  const line = $(`${section}-status`);
+  line.className = "status busy";
+  line.replaceChildren(spinner, label);
+  line.title = "";
+  const box = resultBox(section);
+  delete box.dataset.state;
+  box.dataset.busy = "";
+  setActions(section, false);
+  $(`${section}-cancel`).hidden = false;
+  b.tick = window.setInterval(paint, 1000);
+}
+
+/** `lockNow`: disable the buttons at once (a loaded file's old result must not be downloaded during a re-run). */
+function startBusy(section: Section, lockNow: boolean) {
+  stopBusy(section);
+  busy[section] = { start: Date.now(), delay: window.setTimeout(() => showBusy(section), SPINNER_DELAY) };
+  if (lockNow) setActions(section, false);
+}
+
+function stopBusy(section: Section) {
+  const b = busy[section];
+  if (!b) return;
+  window.clearTimeout(b.delay);
+  window.clearInterval(b.tick);
+  busy[section] = null;
+  delete resultBox(section).dataset.busy;
+  $(`${section}-cancel`).hidden = true;
+  setActions(section, hasResult(section));
 }
 
 function options(): Options {
@@ -63,14 +121,21 @@ function setLoadStatus(message: string, busy: boolean) {
 }
 
 const engine = new EngineClient((m) => setLoadStatus(m, true));
-engine.ready.then(
-  () => setLoadStatus("Ready. Everything stays on this device.", false),
-  (e: Error) => {
-    setLoadStatus("The cleaning engine could not start.", false);
-    setError("text-error", e.message);
-    setError("file-error", e.message);
-  },
-);
+function watchEngine() {
+  engineReady = false;
+  engine.ready.then(
+    () => {
+      engineReady = true;
+      setLoadStatus("Ready. Everything stays on this device.", false);
+    },
+    (e: Error) => {
+      setLoadStatus("The cleaning engine could not start.", false);
+      setError("text-error", e.message);
+      setError("file-error", e.message);
+    },
+  );
+}
+watchEngine();
 
 function renderText(original: string, r: TextResult) {
   lastText = r;
@@ -136,30 +201,63 @@ async function processText() {
   setError("text-error", null);
   const text = input.value;
   if (text === "") return clearText();
+  startBusy("text", false);
   try {
     const r = await engine.cleanText(text, options());
-    if (mine === textRun) renderText(text, r);
+    if (mine !== textRun) return;
+    stopBusy("text");
+    renderText(text, r);
   } catch (e) {
-    if (mine === textRun) setError("text-error", (e as Error).message);
+    if (mine !== textRun) return; // superseded or cancelled
+    lastText = null;
+    setError("text-error", (e as Error).message);
   }
 }
 
 async function processFile() {
   const mine = ++fileRun;
   if (!officeFile) return;
+  setError("file-error", null);
+  startBusy("file", true);
   const { name, bytes } = officeFile;
   try {
     const r = await engine.cleanFile(name, bytes.slice(0), options());
-    if (mine === fileRun) renderFile(name, bytes.byteLength, r);
+    if (mine !== fileRun) return;
+    stopBusy("file");
+    renderFile(name, bytes.byteLength, r);
   } catch (e) {
-    if (mine === fileRun) setError("file-error", (e as Error).message);
+    if (mine !== fileRun) return; // superseded or cancelled
+    clearFile();
+    setStatus("file", { state: "error", message: "Failed — see the message on the left." });
+    setError("file-error", (e as Error).message);
   }
 }
 
-let timer: number | undefined;
+/** Ends whatever runs: the engine restarts and every section that was busy drops its run. */
+function cancel() {
+  const running = (["text", "file"] as const).filter((s) => busy[s]);
+  textRun++;
+  fileRun++;
+  engine.cancel();
+  watchEngine();
+  setLoadStatus("Restarting the engine…", true);
+  for (const section of running) {
+    if (section === "file") removeFile();
+    else clearText();
+    setStatus(section, { state: "error", message: CANCELLED });
+  }
+}
+
+// Typing and quick option clicks are merged into one run; a long file is never queued behind a pile of stale runs.
+let textTimer: number | undefined;
+let fileTimer: number | undefined;
 const scheduleText = () => {
-  window.clearTimeout(timer);
-  timer = window.setTimeout(processText, 250);
+  window.clearTimeout(textTimer);
+  textTimer = window.setTimeout(processText, 250);
+};
+const scheduleFile = () => {
+  window.clearTimeout(fileTimer);
+  fileTimer = window.setTimeout(processFile, 300);
 };
 
 async function loadFile(file: File) {
@@ -171,7 +269,11 @@ async function loadFile(file: File) {
   }
   if (UNSUPPORTED_OFFICE.includes(e)) return setError("file-error", `${e} (macro and template files) is not supported.`);
 
+  const office = OFFICE.includes(e);
+  const mine = office ? ++fileRun : fileRun; // a text file must not drop an Office run in flight
+  if (office) startBusy("file", true);
   const bytes = await file.arrayBuffer();
+  if (mine !== fileRun) return; // cancelled while reading
   if (OFFICE.includes(e)) {
     officeFile = { name: file.name, bytes };
     $("file-name").textContent = file.name;
@@ -194,6 +296,7 @@ async function loadFile(file: File) {
 function removeFile() {
   officeFile = null;
   fileRun++; // drops a run still in flight
+  window.clearTimeout(fileTimer);
   setError("file-error", null);
   $("file-card").hidden = true;
   clearFile();
@@ -211,8 +314,8 @@ function download(data: BlobPart, name: string, type: string) {
 input.addEventListener("input", scheduleText);
 for (const box of checkboxes) {
   box.addEventListener("change", () => {
-    void processText();
-    void processFile();
+    scheduleText();
+    scheduleFile();
   });
 }
 $<HTMLInputElement>("file").addEventListener("change", (e) => {
@@ -222,6 +325,8 @@ $<HTMLInputElement>("file").addEventListener("change", (e) => {
   if (file) void loadFile(file);
 });
 $("file-remove").addEventListener("click", removeFile);
+$("file-cancel").addEventListener("click", cancel);
+$("text-cancel").addEventListener("click", cancel);
 
 const zone = $("dropzone");
 zone.addEventListener("dragover", (e) => {
