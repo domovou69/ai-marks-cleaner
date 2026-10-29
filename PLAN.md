@@ -99,7 +99,7 @@ cost little window but take wall time). Each stage needs a "yes" before it start
 | 0 | Kickoff | PLAN.md, CLAUDE.md, public repo, plan PR | ≈15 min | ≈6 % | done |
 | 1 | Engine in Node | submodule at v0.7.0, `adapter/engine.py`, Pyodide smoke test in Node (text + one DOCX / XLSX / PPTX), defaults as above, `docs/known-issues.md` | ≈45 min | ≈15 % | done |
 | 2 | MVP PWA | Vite + TS app, worker, self-hosted Pyodide, paste / upload / download, red-marked preview, report, About with credits, CSP, offline service worker, Pages deploy workflow, one Playwright e2e on the build | ≈1.5 h | ≈30 % | done |
-| 3 | CI, tests and release watch (cheaper path chosen 2026-10-29) | CI on PRs (smoke, e2e: offline, zero network after load including the worker, valid ZIP), patches check, monthly workflow that opens a PR when upstream has a new release tag. Golden snapshots moved to the backlog | ≈1 h | ≈20 % | planned |
+| 3 | CI, tests and release watch (cheaper path chosen 2026-10-29) | CI on PRs (smoke, e2e: offline, zero network after load including the worker, valid ZIP), patches check, monthly workflow that opens a PR when upstream has a new release tag. Golden snapshots moved to the backlog | ≈1 h | ≈20 % | in review |
 | 4 | Real-file check | my own files through the deployed page; findings sorted into fixes and backlog | ≈30 min | ≈10 % | planned |
 | | Total | | ≈4 h over 3–4 sessions | ≈80 % of one window | |
 
@@ -122,6 +122,8 @@ Optional, not planned: LibreOffice headless check that cleaned files open withou
 | 2026-10-29 | No `publishing` plugin; site at domovou69.github.io/ai-marks-cleaner | personal use only | user |
 | 2026-10-29 | Kit skill for upstream wrappers deferred until after stage 3 | write the recipe from a working example | user |
 | 2026-10-29 | Stage 3 on the cheaper path: golden snapshots moved to the backlog (first item, before the first upstream bump is merged) | saves ≈10 % of a window; smoke + e2e already catch breakage | user |
+| 2026-10-29 | CI runs on `pull_request` only (and `workflow_dispatch`), not on `push` to `main` | a run takes 3–5 min; a bug on `main` is still caught by the tests in `pages.yml` before deploy | user |
+| 2026-10-29 | Release watch runs monthly (cron `0 6 1 * *`), not every exact 30 days; it dispatches CI on the bump branch | cron has no "every 30 days"; PRs opened with the default token do not start `pull_request` workflows | proposed |
 
 ## Risks and limits
 

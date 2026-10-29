@@ -1,0 +1,34 @@
+name: Upstream release
+
+# Monthly: when guillaumemeyer/watermarks-remover has a release tag newer than the one pinned in upstream/, open a PR
+# that moves the submodule. Releases only. Run by hand from main with dry_run to see what it would do.
+# Needs the repository setting "Allow GitHub Actions to create and approve pull requests".
+on:
+  schedule:
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Print the PR text instead of opening the PR"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  watch:
+    # Scheduled runs are always on the default branch; a manual run from any other branch is skipped.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+      - run: .github/scripts/upstream-release.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry_run }}
