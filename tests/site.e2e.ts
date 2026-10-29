@@ -28,8 +28,16 @@ test("cleans pasted text and an Office file on the built site, offline, with no 
   // Office: the file has its own report and the text result stays untouched. The download is a valid ZIP.
   await page.locator("#file").setInputFiles("tests/fixtures/sample.docx");
   await expect(page.locator("#file-status")).toContainText("Found");
-  await expect(page.locator("#file-section")).toHaveAttribute("data-state", "found");
+  await expect(page.locator("#file-result")).toHaveAttribute("data-state", "found");
   expect(await page.locator("#notes li").count()).toBeGreaterThan(0);
+
+  // Changing an option re-cleans the loaded file without choosing it again.
+  const notes = () => page.locator("#notes").innerText();
+  const before = await notes();
+  await page.locator('input[data-option="normalize_spaces"]').check();
+  await expect.poll(notes).not.toBe(before);
+  await page.locator('input[data-option="normalize_spaces"]').uncheck();
+  await expect.poll(notes).toBe(before);
   await expect(page.locator("#preview mark")).toHaveCount(2);
   await expect(page.locator("#text-status")).toContainText("Found");
   const fileDownload = page.waitForEvent("download");
@@ -46,6 +54,11 @@ test("cleans pasted text and an Office file on the built site, offline, with no 
   await expect(page.locator("#preview mark")).toHaveCount(2);
   await page.locator("#file").setInputFiles({ name: "old.doc", mimeType: "application/msword", buffer: Buffer.from("x") });
   await expect(page.locator("#file-error")).toContainText("old binary Office format");
+
+  // A plain-text file opens in the Text section and is cleaned there.
+  await page.locator("#file").setInputFiles("tests/fixtures/sample.txt");
+  await expect(page.locator("#input")).toHaveValue("he\u200bllo world\n");
+  await expect(page.locator("#preview mark")).toHaveCount(1);
 
   // Offline: after a reload the service worker serves the whole app, engine included.
   await page.evaluate(() => navigator.serviceWorker.ready);
