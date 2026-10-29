@@ -27,4 +27,5 @@ watermarks-remover engine through Pyodide. The plan and the status of each stage
 
 ## Commands
 
-- Set up: `git submodule update --init` (more commands are added in stage 1).
+- Set up: `git submodule update --init && npm install`
+- Smoke test (Pyodide in Node): `npm run test:smoke`
