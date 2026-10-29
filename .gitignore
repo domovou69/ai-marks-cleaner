@@ -1,5 +1,10 @@
 node_modules/
 dist/
+public/pyodide/
+public/engine/
+public/licenses/
+test-results/
+playwright-report/
 .DS_Store
 *.local.*
 .env

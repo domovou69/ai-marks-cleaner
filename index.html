@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>AI Marks Cleaner</title>
+  <meta name="description" content="Removes AI provenance marks from text and Office files, in your browser. Nothing is uploaded.">
+  <meta name="theme-color" content="#b3261e">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="/src/style.css">
+  <script type="module" src="/src/main.ts"></script>
+</head>
+<body>
+  <header>
+    <h1>AI Marks Cleaner</h1>
+    <nav><a href="./about.html">About</a></nav>
+  </header>
+  <p class="lead">Removes invisible characters and provenance metadata that AI tools leave in text and Office files.
+    Everything runs in this page; nothing is uploaded.</p>
+
+  <section id="status" aria-live="polite">
+    <progress id="progress"></progress>
+    <span id="status-text">Starting…</span>
+  </section>
+  <p id="error" role="alert" hidden></p>
+
+  <section>
+    <h2>Options</h2>
+    <p class="hint">Invisible characters (zero-width, word joiner, BOM, tag characters) are always removed.
+      These switches change text that may be legitimate, so they are off by default.</p>
+    <div class="options">
+      <label><input type="checkbox" data-option="normalize_spaces"> Normalize spaces
+        <small>Turns no-break spaces and U+202F into plain spaces. Correct typography in Russian, so off by default.</small></label>
+      <label><input type="checkbox" data-option="nfkc"> Unicode NFKC
+        <small>Folds look-alike forms (full-width letters, ligatures) into plain ones.</small></label>
+      <label><input type="checkbox" data-option="aggressive_homoglyphs"> Replace homoglyphs
+        <small>Can turn real Cyrillic letters into Latin ones. Use only for Latin text.</small></label>
+      <label><input type="checkbox" data-option="strip_emoji_glue"> Strip emoji joiners
+        <small>Breaks multi-person and skin-tone emoji into separate emoji.</small></label>
+      <label><input type="checkbox" data-option="strip_bidi"> Strip direction marks
+        <small>Removes bidi controls; right-to-left text may display wrongly.</small></label>
+    </div>
+    <p id="office-note" class="hint" hidden>For Office files only “Normalize spaces” applies; the other switches work on text only.</p>
+  </section>
+
+  <section>
+    <h2>Input</h2>
+    <div id="text-mode">
+      <label for="input" class="visually-hidden">Text to clean</label>
+      <textarea id="input" rows="10" placeholder="Paste text here" spellcheck="false"></textarea>
+    </div>
+    <div id="file-card" hidden>
+      <strong id="file-name"></strong> <span id="file-size"></span>
+      <button type="button" id="file-remove">Remove file</button>
+    </div>
+    <div id="dropzone">
+      <label for="file">Or choose a file (.docx, .xlsx, .pptx, or a text file up to 50 MB), or drop it here:</label>
+      <input type="file" id="file">
+    </div>
+  </section>
+
+  <section id="text-result" hidden>
+    <h2>Result</h2>
+    <p id="text-summary" class="hint"></p>
+    <h3>Preview <small>(red = removed from the input)</small></h3>
+    <pre id="preview"></pre>
+    <div class="actions">
+      <button type="button" id="copy">Copy cleaned text</button>
+      <button type="button" id="download-text">Download</button>
+    </div>
+  </section>
+
+  <section id="file-result" hidden>
+    <h2>Report</h2>
+    <p id="file-summary" class="hint"></p>
+    <ul id="notes"></ul>
+    <div class="actions">
+      <button type="button" id="download-file">Download cleaned file</button>
+    </div>
+  </section>
+
+  <footer>
+    <a href="./about.html">About and credits</a> ·
+    <a href="https://github.com/domovou69/ai-marks-cleaner">Source</a>
+  </footer>
+</body>
+</html>
