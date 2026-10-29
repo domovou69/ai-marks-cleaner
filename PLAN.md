@@ -93,8 +93,8 @@ cost little window but take wall time). Each stage needs a "yes" before it start
 
 | # | Stage | Output | Wall time | Window | Status |
 | --- | --- | --- | --- | --- | --- |
-| 0 | Kickoff | PLAN.md, CLAUDE.md, public repo, plan PR | ≈15 min | ≈6 % | in review |
-| 1 | Engine in Node | submodule at v0.7.0, `adapter/engine.py`, Pyodide smoke test in Node (text + one DOCX / XLSX / PPTX), defaults as above, `docs/known-issues.md` | ≈45 min | ≈15 % | planned |
+| 0 | Kickoff | PLAN.md, CLAUDE.md, public repo, plan PR | ≈15 min | ≈6 % | done |
+| 1 | Engine in Node | submodule at v0.7.0, `adapter/engine.py`, Pyodide smoke test in Node (text + one DOCX / XLSX / PPTX), defaults as above, `docs/known-issues.md` | ≈45 min | ≈15 % | in review |
 | 2 | MVP PWA | Vite + TS app, worker, self-hosted Pyodide, paste / upload / download, red-marked preview, report, About with credits, CSP, offline service worker, Pages deploy workflow, one Playwright e2e on the build | ≈1.5 h | ≈30 % | planned |
 | 3 | CI, tests and release watch | CI on PRs (smoke, golden snapshots for text / DOCX / XLSX / PPTX, e2e: offline, zero network after load, valid ZIP), patches check, monthly workflow that opens a PR when upstream has a new release tag | ≈1.5 h | ≈30 % | planned |
 | 4 | Real-file check | my own files through the deployed page; findings sorted into fixes and backlog | ≈30 min | ≈10 % | planned |
