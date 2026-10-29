@@ -28,8 +28,7 @@ const work = mkdtempSync(join(tmpdir(), "golden-"));
 try {
   const gen = spawnSync(python, ["-I", join(root, "tests/real-check/make-files.py"), work], { encoding: "utf8" });
   if (gen.status !== 0) {
-    console.error(`Input generator failed (${python}); install tests/real-check/requirements.txt first:\n${gen.stderr || gen.error}`);
-    process.exit(2);
+    throw new Error(`Input generator failed (${python}); install tests/real-check/requirements.txt first:\n${gen.stderr || gen.error}`);
   }
 
   const py = await loadPyodide();
@@ -49,6 +48,7 @@ try {
   }
 
   const failures = [];
+  const writes = [];
   const seen = new Set();
   for (const rel of inputs) {
     const label = rel.replace(/\.[^.]+$/, "").replace("/", "-");
@@ -58,7 +58,7 @@ try {
 
     const file = join(expectedDir, `${label}.json`);
     if (update) {
-      writeFileSync(file, actual);
+      writes.push([file, actual]);
     } else if (!existsSync(file)) {
       failures.push(`${label}: no expected file; run UPDATE_GOLDEN=1 npm run test:golden`);
     } else if (readFileSync(file, "utf8") !== actual) {
@@ -71,13 +71,18 @@ try {
     }
   }
   for (const f of readdirSync(expectedDir)) {
-    if (!seen.has(f)) failures.push(`${f}: expected file without an input; delete it`);
+    if (!seen.has(f) && !update) failures.push(`${f}: expected file without an input; delete it`);
   }
 
-  if (update) console.log(`updated ${seen.size} files in tests/golden/expected; review the diff before committing`);
+  // A run with any failure writes nothing: a snapshot that fails the independent checks must not become the new truth.
+  if (update && !failures.length) {
+    for (const [file, text] of writes) writeFileSync(file, text);
+    for (const f of readdirSync(expectedDir)) if (!seen.has(f)) rmSync(join(expectedDir, f));
+    console.log(`updated ${seen.size} files in tests/golden/expected; review the diff before committing`);
+  }
   if (failures.length) {
-    console.error(`\n${failures.join("\n\n")}\n\n${failures.length} golden failure(s). If the change is intended: UPDATE_GOLDEN=1 npm run test:golden and review the diff.`);
-    process.exit(1);
+    console.error(`\n${failures.join("\n\n")}\n\n${failures.length} golden failure(s).${update ? "" : " If the change is intended: UPDATE_GOLDEN=1 npm run test:golden and review the diff."}`);
+    process.exitCode = 1; // not process.exit(): the finally block below removes the temp directory
   }
 } finally {
   rmSync(work, { recursive: true, force: true });

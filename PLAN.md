@@ -70,9 +70,9 @@ From the PR list of xpath-to-class-chain (no deep review, by decision).
   - Size limit 50 MB per file; one file at a time.
 - Out: `.doc/.xls/.ppt` (rejected with a message), macro and template variants, images, audio, video, Layer B
   (statistical watermarks), batch processing.
-- Backlog after v1, in this order: (1) done in stage 5: golden snapshots for text / DOCX / XLSX / PPTX (fixed inputs: Russian text with
+- Backlog after v1, in this order: (1) golden snapshots for text / DOCX / XLSX / PPTX (done in stage 5) (fixed inputs: Russian text with
   a no-break space, astral characters, invisible characters; expected output kept in the repository, a difference
-  fails the test and shows the diff; the inputs and expected text already exist in `tests/real-check/make-files.py`), to be done before the first upstream bump PR is merged, since that is when quiet
+  fails the test and shows the diff; the inputs and expected text already exist in `tests/real-check/make-files.py`); wanted before the first upstream bump PR is merged, since that is when quiet
   behaviour changes start to matter; (2) PDF feasibility spike in Pyodide with a go / no-go note; (3) visible
   typography cleanup (dashes, quotes) as an option, off by default, not based on upstream `humanize_pass.py`.
 
@@ -105,7 +105,7 @@ cost little window but take wall time). Each stage needs a "yes" before it start
 | | Total | | ≈4 h over 3–4 sessions | ≈80 % of one window | |
 
 Cheaper path, taken for stage 3: no golden snapshots (smoke + e2e only; a bump PR then shows breakage but not quiet
-behaviour changes). Further saving: skip stage 4 (≈−10 % of a window).
+behaviour changes). The snapshots were added afterwards, in stage 5. Further saving: skip stage 4 (≈−10 % of a window).
 
 Optional, not planned: LibreOffice headless check that cleaned files open without a repair prompt.
 
