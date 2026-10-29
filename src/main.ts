@@ -29,21 +29,25 @@ const cleanedName = (name: string) => {
 const formatSize = (n: number) => (n < 1024 * 1024 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
+/** File problems show under the chooser; text problems use the status line. */
 function setError(id: "text-error" | "file-error", message: string | null) {
+  if (id === "text-error") return setStatus("text", message === null ? null : { state: "found", message });
   const box = $(id);
   box.hidden = message === null;
   box.textContent = message ?? "";
 }
 
-/** Shows the verdict banner (or the placeholder when there is no result) of one section. */
-function setVerdict(section: "text" | "file", verdict: { found: boolean; message: string } | null) {
-  $(`${section}-empty`).hidden = verdict !== null;
-  const v = $(`${section}-verdict`);
-  v.hidden = verdict === null;
-  if (!verdict) return;
-  // A coloured banner, so a clean result is as visible as a dirty one.
-  v.className = verdict.found ? "verdict found" : "verdict ok";
-  v.textContent = `${verdict.found ? "Found" : "Clean"} — ${verdict.message}`;
+/**
+ * Writes the status line under a section title and colours the section's boxes through data-state. Both always
+ * take the same space, so nothing moves when a result appears. Null clears both.
+ */
+function setStatus(section: "text" | "file", status: { state: "ok" | "found"; message: string } | null) {
+  const line = $(`${section}-status`);
+  line.className = status ? `status ${status.state}` : "status";
+  line.textContent = status ? `${status.state === "ok" ? "✓" : "!"} ${status.message}` : "";
+  const card = $(`${section}-section`);
+  if (status) card.dataset.state = status.state;
+  else delete card.dataset.state;
 }
 
 function options(): Options {
@@ -52,16 +56,16 @@ function options(): Options {
   return o as Options;
 }
 
-function setStatus(message: string, busy: boolean) {
+function setLoadStatus(message: string, busy: boolean) {
   $("status-text").textContent = message;
   $<HTMLProgressElement>("progress").hidden = !busy;
 }
 
-const engine = new EngineClient((m) => setStatus(m, true));
+const engine = new EngineClient((m) => setLoadStatus(m, true));
 engine.ready.then(
-  () => setStatus("Ready. Everything stays on this device.", false),
+  () => setLoadStatus("Ready. Everything stays on this device.", false),
   (e: Error) => {
-    setStatus("The cleaning engine could not start.", false);
+    setLoadStatus("The cleaning engine could not start.", false);
     setError("text-error", e.message);
     setError("file-error", e.message);
   },
@@ -78,16 +82,30 @@ function renderText(original: string, r: TextResult) {
     }),
   );
   const n = r.changes.length;
-  setVerdict("text", {
-    found: n > 0,
-    message: n === 0 ? "nothing to remove." : `${plural(n, "place")} changed, ${plural(r.removed, "character")} removed.`,
+  setStatus("text", {
+    state: n > 0 ? "found" : "ok",
+    message: n === 0 ? "Clean — nothing to remove." : `Found — ${plural(n, "place")} changed, ${plural(r.removed, "character")} removed.`,
   });
-  $("text-result").hidden = false;
+  $<HTMLButtonElement>("copy").disabled = false;
+  $<HTMLButtonElement>("download-text").disabled = false;
+}
+
+function clearText() {
+  lastText = null;
+  setStatus("text", null);
+  const hint = document.createElement("span");
+  hint.className = "placeholder";
+  hint.textContent = "The cleaned text appears here.";
+  preview.replaceChildren(hint);
+  $<HTMLButtonElement>("copy").disabled = true;
+  $<HTMLButtonElement>("download-text").disabled = true;
 }
 
 function renderFile(name: string, before: number, r: FileResult) {
   lastFile = { name, result: r };
-  $("file-summary").textContent = `${name}: ${formatSize(before)} → ${formatSize(r.data.byteLength)}.`;
+  const summary = $("file-summary");
+  summary.className = "hint";
+  summary.textContent = `${name}: ${formatSize(before)} → ${formatSize(r.data.byteLength)}.`;
   $("notes").replaceChildren(
     ...r.notes.map((n) => {
       const li = document.createElement("li");
@@ -95,23 +113,28 @@ function renderFile(name: string, before: number, r: FileResult) {
       return li;
     }),
   );
-  setVerdict("file", {
-    found: r.notes.length > 0,
-    message: r.notes.length === 0 ? "nothing to remove." : `${plural(r.notes.length, "change")} made to the file.`,
+  setStatus("file", {
+    state: r.notes.length > 0 ? "found" : "ok",
+    message: r.notes.length === 0 ? "Clean — nothing to remove." : `Found — ${plural(r.notes.length, "change")} made to the file.`,
   });
-  $("file-result").hidden = false;
+  $<HTMLButtonElement>("download-file").disabled = false;
+}
+
+function clearFile() {
+  lastFile = null;
+  setStatus("file", null);
+  const summary = $("file-summary");
+  summary.className = "placeholder";
+  summary.textContent = "The report for the cleaned file appears here.";
+  $("notes").replaceChildren();
+  $<HTMLButtonElement>("download-file").disabled = true;
 }
 
 async function processText() {
   const mine = ++textRun;
   setError("text-error", null);
   const text = input.value;
-  if (text === "") {
-    lastText = null;
-    setVerdict("text", null);
-    $("text-result").hidden = true;
-    return;
-  }
+  if (text === "") return clearText();
   try {
     const r = await engine.cleanText(text, options());
     if (mine === textRun) renderText(text, r);
@@ -169,12 +192,10 @@ async function loadFile(file: File) {
 
 function removeFile() {
   officeFile = null;
-  lastFile = null;
   fileRun++; // drops a run still in flight
   setError("file-error", null);
   $("file-card").hidden = true;
-  $("file-result").hidden = true;
-  setVerdict("file", null);
+  clearFile();
 }
 
 function download(data: BlobPart, name: string, type: string) {

@@ -17,7 +17,7 @@ test("cleans pasted text and an Office file on the built site, offline, with no 
   // Text: a zero-width space and an astral tag character (U+E0041) are removed and marked; a later one tests the offset mapping.
   await page.locator("#input").fill("he​llo \u{E0041}world");
   await expect(page.locator("#preview mark")).toHaveCount(2);
-  await expect(page.locator("#file-verdict")).toBeHidden();
+  await expect(page.locator("#file-status")).toHaveText("");
   await expect(page.locator("#preview mark").first()).toHaveText("U+200B");
   await expect(page.locator("#preview")).toContainText("world");
   const textDownload = page.waitForEvent("download");
@@ -27,11 +27,11 @@ test("cleans pasted text and an Office file on the built site, offline, with no 
 
   // Office: the file has its own report and the text result stays untouched. The download is a valid ZIP.
   await page.locator("#file").setInputFiles("tests/fixtures/sample.docx");
-  await expect(page.locator("#file-result")).toBeVisible();
-  await expect(page.locator("#file-verdict")).toContainText("Found");
+  await expect(page.locator("#file-status")).toContainText("Found");
+  await expect(page.locator("#file-section")).toHaveAttribute("data-state", "found");
   expect(await page.locator("#notes li").count()).toBeGreaterThan(0);
   await expect(page.locator("#preview mark")).toHaveCount(2);
-  await expect(page.locator("#text-verdict")).toContainText("Found");
+  await expect(page.locator("#text-status")).toContainText("Found");
   const fileDownload = page.waitForEvent("download");
   await page.locator("#download-file").click();
   const download = await fileDownload;
@@ -42,7 +42,7 @@ test("cleans pasted text and an Office file on the built site, offline, with no 
 
   // Legacy format is rejected with a message.
   await page.locator("#file-remove").click();
-  await expect(page.locator("#file-result")).toBeHidden();
+  await expect(page.locator("#file-status")).toHaveText("");
   await expect(page.locator("#preview mark")).toHaveCount(2);
   await page.locator("#file").setInputFiles({ name: "old.doc", mimeType: "application/msword", buffer: Buffer.from("x") });
   await expect(page.locator("#file-error")).toContainText("old binary Office format");

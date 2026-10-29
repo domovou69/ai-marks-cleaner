@@ -12,6 +12,7 @@
   --ok-fg: #14532d;
   --found-bg: #fde3e1;
   --found-fg: #8c1d18;
+  --ok-line: #2e7d32;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -27,6 +28,7 @@
     --ok-fg: #b7ebc6;
     --found-bg: #4a2220;
     --found-fg: #ffd9d6;
+    --ok-line: #6fbf8a;
   }
 }
 * { box-sizing: border-box; }
@@ -64,7 +66,7 @@ summary { cursor: pointer; }
 dt { font-weight: 600; color: var(--fg); margin-top: 0.4rem; }
 dd { margin: 0; }
 
-#dropzone { padding: 0.9rem; border: 2px dashed var(--border); border-radius: 10px; }
+#dropzone { padding: 0.9rem; border-style: dashed; }
 #dropzone.over { border-color: var(--accent); background: var(--found-bg); }
 #dropzone label { display: block; margin-bottom: 0.5rem; }
 
@@ -76,8 +78,6 @@ textarea, pre {
   height: 18rem;
   margin: 0;
   padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
   background: var(--bg);
   color: inherit;
   font: 0.95rem/1.5 ui-monospace, monospace;
@@ -92,9 +92,15 @@ mark {
   font-size: 0.8em;
 }
 .placeholder { color: var(--muted); margin: 0; }
-.verdict { margin: 0 0 0.75rem; padding: 0.7rem 0.9rem; border-radius: 8px; font-weight: 600; }
-.verdict.ok { background: var(--ok-bg); color: var(--ok-fg); }
-.verdict.found { background: var(--found-bg); color: var(--found-fg); }
+/* The status line always takes its height, so a result appearing never moves the page. */
+.status { min-height: 1.4rem; margin: 0 0 0.5rem; font-size: 0.85rem; font-weight: 600; }
+.status.ok { color: var(--ok-fg); }
+.status.found { color: var(--found-fg); }
+/* Every boxed part of a section has the same 2px border; only its colour changes with the result. */
+.stateful { border: 2px solid var(--border); border-radius: 8px; }
+[data-state="ok"] .stateful { border-color: var(--ok-line); }
+[data-state="found"] .stateful { border-color: var(--accent); }
+.result-box { min-height: 9rem; padding: 0.75rem; background: var(--bg); }
 .error { margin: 0.5rem 0 0; padding: 0.7rem 0.9rem; border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); }
 #notes { margin: 0.25rem 0; padding-left: 1.25rem; }
 #file-card { margin-top: 0.5rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
@@ -108,8 +114,12 @@ button {
   font: inherit;
   cursor: pointer;
 }
-button:hover { border-color: var(--accent); }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: 0.45; cursor: default; }
 .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 footer { margin-top: 1.5rem; color: var(--muted); }
 [hidden] { display: none !important; }
+@media (max-width: 40rem) {
+  .status { min-height: 2.6rem; } /* room for two lines, so a longer message does not push the page */
+}
