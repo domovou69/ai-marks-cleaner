@@ -82,8 +82,9 @@ test("a long run shows a spinner and elapsed time, locks the buttons and can be 
   await expect(page.locator("#text-status")).toContainText("Found");
   await expect(page.locator("#download-text")).toBeEnabled();
 
-  // The preview diff is quadratic, so this text keeps the engine busy for a long while.
-  await page.locator("#input").fill("ab\u200b".repeat(40_000));
+  // Replacements (here no-break spaces) take the slow general diff, so this text keeps the engine busy for a long while.
+  await page.locator('input[data-option="normalize_spaces"]').check();
+  await page.locator("#input").fill("ab\u00a0".repeat(40_000));
   await expect(page.locator("#text-status")).toContainText("Cleaning…");
   await expect(page.locator("#text-status")).toContainText(/\d+ s/, { timeout: 10_000 });
   await expect(page.locator("#preview")).toHaveAttribute("data-busy", "");
@@ -107,9 +108,10 @@ test("cancelling a re-run after an option change restores the option and the pre
   await expect(page.locator("#status-text")).toHaveText(/Ready/, { timeout: 90_000 });
 
   // Long enough that a re-run takes a few seconds, short enough that the first run finishes.
-  // Real prose with a zero-width space after every word: about 1.5 s per run for 1000 words.
+  // Real prose, a zero-width space after every word, no-break spaces between words. Without "Normalize spaces" the run
+  // only deletes characters and is instant; with it the no-break spaces are replaced, which takes the slow diff.
   const words = readFileSync("PLAN.md", "utf8").split(/\s+/).filter(Boolean).slice(0, 1000);
-  await page.locator("#input").fill(words.map((w) => `${w}\u200b`).join(" "));
+  await page.locator("#input").fill(words.map((w) => `${w}\u200b`).join("\u00a0"));
   await expect(page.locator("#text-status")).toContainText("Found", { timeout: 60_000 });
   const before = await page.locator("#text-status").innerText();
 

@@ -50,6 +50,40 @@ const t2 = py.runPython(`engine.clean_text("a\\u00a0b", {"normalize_spaces": Tru
 assert.equal(t2, "a b");
 assert.throws(() => py.runPython(`engine.clean_text("x", {"bogus": True})`), /unknown option/);
 
+// Preview spans: applying them to the input must give the output, on the fast path (deletions only) and the diff path.
+const spans = py.runPython(`
+def apply(before, changes):
+    out, at = [], 0
+    for c in changes:
+        out += [before[at:c["start"]], c["replacement"]]
+        at = c["end"]
+    return "".join(out) + before[at:]
+cases = [
+    ("", ""), ("abc", "abc"), ("\u200b", ""), ("\u200bab\u200b\u200bc\u200b", "abc"),
+    ("a\\U000E0041b", "ab"),                       # astral character: spans count code points
+    ("a\u00a0b\u200b", "a b"),                  # a replacement: falls back to the diff
+]
+ok = []
+for before, after in cases:
+    changes = engine._changes(before, after)
+    ok.append(apply(before, changes) == after)
+ok
+`).toJs();
+assert.deepEqual(spans, [true, true, true, true, true, true]);
+assert.deepEqual(py.runPython(`engine._changes("a\\U000E0041b", "ab")`).toJs({ dict_converter: Object.fromEntries }), [{ start: 1, end: 2, replacement: "" }]);
+
+// Speed: a long text with a zero-width space after every word must not take seconds.
+const slow = py.runPython(`
+import time
+words = open("/engine/text_unicode.py").read().split()[:3000]
+text = " ".join(w + "\u200b" for w in words)
+t0 = time.time()
+r = engine.clean_text(text)
+(time.time() - t0, len(r["changes"]), len(words))
+`).toJs();
+assert.ok(slow[0] < 1.5, `long text took ${slow[0]} s`);
+assert.equal(slow[1], slow[2]);
+
 // Office: ZWSP removed from body, creator metadata dropped, NBSP kept, result is a valid ZIP.
 for (const [name, marker] of [["docx", "word/document.xml"], ["xlsx", "xl/sharedStrings.xml"], ["pptx", "ppt/slides/slide1.xml"]]) {
   const out = py.runPython(`
