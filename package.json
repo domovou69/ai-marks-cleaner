@@ -8,6 +8,7 @@
     "build": "npm run prepare:assets && tsc --noEmit && vite build",
     "preview": "vite preview --port 4173",
     "test:smoke": "node tests/smoke.mjs",
+    "test:golden": "node tests/golden/run.mjs",
     "test:e2e": "playwright test",
     "test:patches": "node scripts/check-patches.mjs"
   },

@@ -1,0 +1,133 @@
+{
+ "all_switches": {
+  "changes": [
+   "1:2 \"р\" -> \"p\"",
+   "3:4 \"<U+200B>\" -> \"\"",
+   "5:6 \"е\" -> \"e\"",
+   "11:12 \"р\" -> \"p\"",
+   "16:17 \"о\" -> \"o\"",
+   "19:21 \"ес\" -> \"ec\"",
+   "22:24 \"<U+2060>о\" -> \"o\"",
+   "28:29 \"а\" -> \"a\"",
+   "31:32 \"а\" -> \"a\"",
+   "38:39 \"о\" -> \"o\"",
+   "43:44 \"<U+00A0>\" -> \" \"",
+   "45:46 \"<U+00A0>\" -> \" \"",
+   "48:50 \"ре\" -> \"pe\"",
+   "53:54 \"е\" -> \"e\"",
+   "55:56 \"а\" -> \"a\"",
+   "58:59 \"<U+202F>\" -> \" \"",
+   "62:63 \"<U+00A0>\" -> \" \"",
+   "67:71 \"ере<U+00AD>\" -> \"epe\"",
+   "72:74 \"ос\" -> \"oc\"",
+   "77:78 \"е\" -> \"e\"",
+   "79:83 \"арус\" -> \"apyc\"",
+   "84:85 \"а\" -> \"a\"",
+   "91:92 \"і\" -> \"i\"",
+   "120:122 \"ра\" -> \"pa\"",
+   "124:125 \"с\" -> \"c\"",
+   "127:128 \"а\" -> \"a\"",
+   "132:133 \"і\" -> \"i\"",
+   "144:145 \"<U+200D>\" -> \"\"",
+   "146:147 \"<U+200D>\" -> \"\"",
+   "150:156 \"<U+E0067><U+E0062><U+E0065><U+E006E><U+E0067><U+E007F>\" -> \"\"",
+   "158:159 \"<U+FE0F>\" -> \"\"",
+   "162:164 \"<U+200C><U+200D>\" -> \"\"",
+   "170:172 \"<U+E0041><U+E0042>\" -> \"\"",
+   "176:177 \"<U+E0100>\" -> \"\"",
+   "187:188 \"<U+FEFF>\" -> \"\"",
+   "225:226 \"<U+200E>\" -> \"\"",
+   "288:289 \"А\" -> \"A\"",
+   "304:305 \"А\" -> \"A\"",
+   "336:337 \"<U+200B>\" -> \"\""
+  ],
+  "stats": {
+   "input_length": 341,
+   "nfkc_changed": false,
+   "output_length": 321,
+   "removed": {
+    "U+00AD SOFT HYPHEN (Cf)": 1,
+    "U+200B ZERO WIDTH SPACE (Cf)": 2,
+    "U+200C ZERO WIDTH NON-JOINER (Cf)": 1,
+    "U+200D ZERO WIDTH JOINER (Cf)": 3,
+    "U+200E LEFT-TO-RIGHT MARK (Cf)": 1,
+    "U+2060 WORD JOINER (Cf)": 1,
+    "U+E0041 TAG LATIN CAPITAL LETTER A (Cf)": 1,
+    "U+E0042 TAG LATIN CAPITAL LETTER B (Cf)": 1,
+    "U+E0062 TAG LATIN SMALL LETTER B (Cf)": 1,
+    "U+E0065 TAG LATIN SMALL LETTER E (Cf)": 1,
+    "U+E0067 TAG LATIN SMALL LETTER G (Cf)": 2,
+    "U+E006E TAG LATIN SMALL LETTER N (Cf)": 1,
+    "U+E007F CANCEL TAG (Cf)": 1,
+    "U+E0100 VARIATION SELECTOR-17 (Mn)": 1,
+    "U+FE0F VARIATION SELECTOR-16 (Mn)": 1,
+    "U+FEFF ZERO WIDTH NO-BREAK SPACE (Cf)": 1
+   },
+   "removed_count": 20,
+   "replaced": {
+    "U+00A0 NO-BREAK SPACE (Zs)": 3,
+    "U+0410 CYRILLIC CAPITAL LETTER A (Lu)": 2,
+    "U+0430 CYRILLIC SMALL LETTER A (Ll)": 7,
+    "U+0435 CYRILLIC SMALL LETTER IE (Ll)": 7,
+    "U+043E CYRILLIC SMALL LETTER O (Ll)": 4,
+    "U+0440 CYRILLIC SMALL LETTER ER (Ll)": 6,
+    "U+0441 CYRILLIC SMALL LETTER ES (Ll)": 4,
+    "U+0443 CYRILLIC SMALL LETTER U (Ll)": 1,
+    "U+0456 CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I (Ll)": 2,
+    "U+202F NARROW NO-BREAK SPACE (Zs)": 1
+   },
+   "replaced_count": 37
+  },
+  "text": [
+   "Пpивeт, миp! Этo тecтoвый aбзaц.",
+   "«Ёлoчки» — тиpe, цeнa 1 000 ₽, пepeнoc.",
+   "Бeлapycкaя: ў, i, ґ. Lietuvių: ąčęėįšųūž. Укpaїнcькa: ґєiї.",
+   "Emoji: 👨👩👧 🏴 ❤ ok.",
+   "Tags and variation selectors.",
+   "Direction marks stay: abc def (strip_bidi is off).",
+   "Look-alike letters stay by default: Apple (Cyrillic A).",
+   "Tom & Jerry <b> \"q\" 'x' ]]> end."
+  ]
+ },
+ "default": {
+  "changes": [
+   "3:4 \"<U+200B>\" -> \"\"",
+   "22:23 \"<U+2060>\" -> \"\"",
+   "70:71 \"<U+00AD>\" -> \"\"",
+   "162:164 \"<U+200C><U+200D>\" -> \"\"",
+   "170:172 \"<U+E0041><U+E0042>\" -> \"\"",
+   "176:177 \"<U+E0100>\" -> \"\"",
+   "187:188 \"<U+FEFF>\" -> \"\"",
+   "336:337 \"<U+200B>\" -> \"\""
+  ],
+  "stats": {
+   "input_length": 341,
+   "nfkc_changed": false,
+   "output_length": 331,
+   "removed": {
+    "U+00AD SOFT HYPHEN (Cf)": 1,
+    "U+200B ZERO WIDTH SPACE (Cf)": 2,
+    "U+200C ZERO WIDTH NON-JOINER (Cf)": 1,
+    "U+200D ZERO WIDTH JOINER (Cf)": 1,
+    "U+2060 WORD JOINER (Cf)": 1,
+    "U+E0041 TAG LATIN CAPITAL LETTER A (Cf)": 1,
+    "U+E0042 TAG LATIN CAPITAL LETTER B (Cf)": 1,
+    "U+E0100 VARIATION SELECTOR-17 (Mn)": 1,
+    "U+FEFF ZERO WIDTH NO-BREAK SPACE (Cf)": 1
+   },
+   "removed_count": 10,
+   "replaced": {},
+   "replaced_count": 0
+  },
+  "text": [
+   "Привет, мир! Это тестовый абзац.",
+   "«Ёлочки»<U+00A0>—<U+00A0>тире, цена 1<U+202F>000<U+00A0>₽, перенос.",
+   "Беларуская: ў, і, ґ. Lietuvių: ąčęėįšųūž. Українська: ґєії.",
+   "Emoji: 👨<U+200D>👩<U+200D>👧 🏴<U+E0067><U+E0062><U+E0065><U+E006E><U+E0067><U+E007F> ❤<U+FE0F> ok.",
+   "Tags and variation selectors.",
+   "Direction marks stay: abc<U+200E> def (strip_bidi is off).",
+   "Look-alike letters stay by default: Аpple (Cyrillic А).",
+   "Tom & Jerry <b> \"q\" 'x' ]]> end."
+  ]
+ }
+}
