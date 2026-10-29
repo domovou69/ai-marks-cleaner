@@ -44,11 +44,12 @@
     <p class="hint">For Office files only “Normalize spaces” applies; switches marked “text only” work on pasted text and text files.</p>
   </section>
 
-  <section class="card">
+  <section class="card" id="file-section">
     <h2>File <small>(.docx, .xlsx, .pptx)</small></h2>
+    <p id="file-status" class="status" aria-live="polite"></p>
     <div class="workspace">
       <div class="pane">
-        <div id="dropzone">
+        <div id="dropzone" class="stateful">
           <label for="file">Choose a file or drop it here (up to 50 MB). Plain-text files open in the text section below.</label>
           <input type="file" id="file">
         </div>
@@ -58,38 +59,32 @@
         </div>
         <p id="file-error" class="error" role="alert" hidden></p>
       </div>
-      <div class="pane" aria-live="polite">
-        <p id="file-empty" class="placeholder">The report for the cleaned file appears here.</p>
-        <p id="file-verdict" hidden></p>
-        <div id="file-result" hidden>
-          <p id="file-summary" class="hint"></p>
+      <div class="pane">
+        <div id="file-result" class="result-box stateful">
+          <p id="file-summary" class="placeholder">The report for the cleaned file appears here.</p>
           <ul id="notes"></ul>
-          <div class="actions">
-            <button type="button" id="download-file">Download cleaned file</button>
-          </div>
+        </div>
+        <div class="actions">
+          <button type="button" id="download-file" disabled>Download cleaned file</button>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" id="text-section">
     <h2>Text</h2>
+    <p id="text-status" class="status" aria-live="polite"></p>
     <div class="workspace">
       <div class="pane">
         <label for="input" class="visually-hidden">Text to clean</label>
-        <textarea id="input" placeholder="Paste text here" spellcheck="false"></textarea>
+        <textarea id="input" class="stateful" placeholder="Paste text here" spellcheck="false"></textarea>
       </div>
-      <div class="pane" aria-live="polite">
-        <p id="text-error" class="error" role="alert" hidden></p>
-        <p id="text-empty" class="placeholder">The cleaned text appears here.</p>
-        <p id="text-verdict" hidden></p>
-        <div id="text-result" hidden>
-          <pre id="preview"></pre>
-          <p class="hint">Red marks show what was removed from the input.</p>
-          <div class="actions">
-            <button type="button" id="copy">Copy cleaned text</button>
-            <button type="button" id="download-text">Download</button>
-          </div>
+      <div class="pane">
+        <pre id="preview" class="stateful"><span class="placeholder">The cleaned text appears here.</span></pre>
+        <p class="hint">Red marks show what was removed from the input.</p>
+        <div class="actions">
+          <button type="button" id="copy" disabled>Copy cleaned text</button>
+          <button type="button" id="download-text" disabled>Download</button>
         </div>
       </div>
     </div>
