@@ -72,3 +72,32 @@ test("cleans pasted text and an Office file on the built site, offline, with no 
 
   expect(foreign).toEqual([]);
 });
+
+test("a long run shows a spinner and elapsed time, locks the buttons and can be cancelled", async ({ page }) => {
+  await page.goto(SITE);
+  await expect(page.locator("#status-text")).toHaveText(/Ready/, { timeout: 90_000 });
+
+  // A first, quick result that must be locked while the long run is in progress.
+  await page.locator("#input").fill("a\u200bb");
+  await expect(page.locator("#text-status")).toContainText("Found");
+  await expect(page.locator("#download-text")).toBeEnabled();
+
+  // The preview diff is quadratic, so this text keeps the engine busy for a long while.
+  await page.locator("#input").fill("ab\u200b".repeat(40_000));
+  await expect(page.locator("#text-status")).toContainText("Cleaning…");
+  await expect(page.locator("#text-status")).toContainText(/\d+ s/, { timeout: 10_000 });
+  await expect(page.locator("#preview")).toHaveAttribute("data-busy", "");
+  await expect(page.locator("#download-text")).toBeDisabled();
+  await expect(page.locator("#copy")).toBeDisabled();
+
+  await page.locator("#text-cancel").click();
+  await expect(page.locator("#text-status")).toHaveText("Cancelled");
+  await expect(page.locator("#download-text")).toBeDisabled();
+  await expect(page.locator("#text-cancel")).toBeHidden();
+
+  // The engine restarts and works again.
+  await expect(page.locator("#status-text")).toHaveText(/Ready/, { timeout: 90_000 });
+  await page.locator("#input").fill("a\u200bb");
+  await expect(page.locator("#text-status")).toContainText("Found");
+  await expect(page.locator("#download-text")).toBeEnabled();
+});

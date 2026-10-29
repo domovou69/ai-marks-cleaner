@@ -2,18 +2,30 @@ import type { FileResult, Options, Request, Response, TextResult } from "./proto
 
 type Pending = { resolve: (value: never) => void; reject: (error: Error) => void };
 
-/** Promise wrapper around the engine worker. Only the latest text request matters; older ones are dropped. */
+export const CANCELLED = "Cancelled";
+
+/**
+ * Promise wrapper around the engine worker. A running Python call cannot be interrupted, so `cancel()` ends the
+ * worker and starts a fresh one (the runtime reloads from the cache in a few seconds).
+ */
 export class EngineClient {
-  private worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
+  private worker!: Worker;
   private pending = new Map<number, Pending>();
   private nextId = 1;
-  readonly ready: Promise<void>;
+  /** Replaced by `cancel()`; read it again after cancelling. */
+  ready!: Promise<void>;
 
-  constructor(onStatus: (message: string) => void) {
+  constructor(private onStatus: (message: string) => void) {
+    this.start();
+  }
+
+  private start() {
+    const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
+    this.worker = worker;
     this.ready = new Promise((resolve, reject) => {
-      this.worker.onmessage = (event: MessageEvent<Response>) => {
+      worker.onmessage = (event: MessageEvent<Response>) => {
         const msg = event.data;
-        if (msg.kind === "status") onStatus(msg.message);
+        if (msg.kind === "status") this.onStatus(msg.message);
         else if (msg.kind === "ready") resolve();
         else if (msg.kind === "fatal") reject(new Error(msg.error));
         else {
@@ -24,8 +36,17 @@ export class EngineClient {
           else (p.resolve as (v: unknown) => void)(msg.result);
         }
       };
-      this.worker.onerror = (e) => reject(new Error(e.message || "Worker failed"));
+      worker.onerror = (e) => reject(new Error(e.message || "Worker failed"));
     });
+  }
+
+  /** Drops every request in flight (they reject with CANCELLED) and restarts the engine. */
+  cancel() {
+    this.worker.terminate();
+    const error = new Error(CANCELLED);
+    for (const p of this.pending.values()) p.reject(error);
+    this.pending.clear();
+    this.start();
   }
 
   private call<T>(build: (id: number) => Request, transfer: Transferable[] = []): Promise<T> {
