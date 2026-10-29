@@ -19,67 +19,74 @@
   </header>
   <p class="lead">Removes invisible characters and provenance metadata that AI tools leave in text and Office files.
     Everything runs in this page; nothing is uploaded.</p>
+  <p id="status" aria-live="polite"><progress id="progress"></progress><span id="status-text">Starting…</span></p>
 
-  <section id="status" aria-live="polite">
-    <progress id="progress"></progress>
-    <span id="status-text">Starting…</span>
-  </section>
-  <p id="error" role="alert" hidden></p>
-
-  <section>
+  <section class="card">
     <h2>Options</h2>
-    <p class="hint">Invisible characters (zero-width, word joiner, BOM, tag characters) are always removed.
-      These switches change text that may be legitimate, so they are off by default.</p>
+    <p class="hint">Invisible characters are always removed. These switches can change legitimate text, so they are off by default.</p>
     <div class="options">
-      <label><input type="checkbox" data-option="normalize_spaces"> Normalize spaces
-        <small>Turns no-break spaces and U+202F into plain spaces. Correct typography in Russian, so off by default.</small></label>
-      <label><input type="checkbox" data-option="nfkc"> Unicode NFKC
-        <small>Folds look-alike forms (full-width letters, ligatures) into plain ones.</small></label>
-      <label><input type="checkbox" data-option="aggressive_homoglyphs"> Replace homoglyphs
-        <small>Can turn real Cyrillic letters into Latin ones. Use only for Latin text.</small></label>
-      <label><input type="checkbox" data-option="strip_emoji_glue"> Strip emoji joiners
-        <small>Breaks multi-person and skin-tone emoji into separate emoji.</small></label>
-      <label><input type="checkbox" data-option="strip_bidi"> Strip direction marks
-        <small>Removes bidi controls; right-to-left text may display wrongly.</small></label>
+      <label title="Turns no-break spaces and U+202F into plain spaces."><input type="checkbox" data-option="normalize_spaces"> Normalize spaces</label>
+      <label title="Folds look-alike forms (full-width letters, ligatures) into plain ones."><input type="checkbox" data-option="nfkc"> Unicode NFKC</label>
+      <label title="Replaces look-alike letters with Latin ones."><input type="checkbox" data-option="aggressive_homoglyphs"> Replace homoglyphs</label>
+      <label title="Removes zero-width joiners inside emoji."><input type="checkbox" data-option="strip_emoji_glue"> Strip emoji joiners</label>
+      <label title="Removes bidirectional control characters."><input type="checkbox" data-option="strip_bidi"> Strip direction marks</label>
     </div>
+    <details>
+      <summary>What do these do?</summary>
+      <dl>
+        <dt>Normalize spaces</dt><dd>No-break spaces and U+202F become plain spaces. Correct typography in Russian, so off by default.</dd>
+        <dt>Unicode NFKC</dt><dd>Folds look-alike forms (full-width letters, ligatures) into plain ones.</dd>
+        <dt>Replace homoglyphs</dt><dd>Can turn real Cyrillic letters into Latin ones. Use only for Latin text.</dd>
+        <dt>Strip emoji joiners</dt><dd>Breaks multi-person and skin-tone emoji into separate emoji.</dd>
+        <dt>Strip direction marks</dt><dd>Right-to-left text may display wrongly afterwards.</dd>
+      </dl>
+    </details>
     <p id="office-note" class="hint" hidden>For Office files only “Normalize spaces” applies; the other switches work on text only.</p>
   </section>
 
-  <section>
-    <h2>Input</h2>
-    <div id="text-mode">
-      <label for="input" class="visually-hidden">Text to clean</label>
-      <textarea id="input" rows="10" placeholder="Paste text here" spellcheck="false"></textarea>
-    </div>
-    <div id="file-card" hidden>
-      <strong id="file-name"></strong> <span id="file-size"></span>
-      <button type="button" id="file-remove">Remove file</button>
-    </div>
+  <section class="card">
     <div id="dropzone">
-      <label for="file">Or choose a file (.docx, .xlsx, .pptx, or a text file up to 50 MB), or drop it here:</label>
+      <label for="file">Choose a file (.docx, .xlsx, .pptx, or a text file up to 50 MB), or drop it here:</label>
       <input type="file" id="file">
     </div>
+    <p id="file-error" class="error" role="alert" hidden></p>
   </section>
 
-  <section id="text-result" hidden>
-    <h2>Result</h2>
-    <p id="text-summary" class="hint"></p>
-    <h3>Preview <small>(red = removed from the input)</small></h3>
-    <pre id="preview"></pre>
-    <div class="actions">
-      <button type="button" id="copy">Copy cleaned text</button>
-      <button type="button" id="download-text">Download</button>
-    </div>
-  </section>
+  <div class="workspace">
+    <section class="pane">
+      <h2>Input</h2>
+      <div id="text-mode">
+        <label for="input" class="visually-hidden">Text to clean</label>
+        <textarea id="input" placeholder="Or paste text here" spellcheck="false"></textarea>
+      </div>
+      <div id="file-card" hidden>
+        <strong id="file-name"></strong> <span id="file-size"></span>
+        <button type="button" id="file-remove">Remove file</button>
+      </div>
+    </section>
 
-  <section id="file-result" hidden>
-    <h2>Report</h2>
-    <p id="file-summary" class="hint"></p>
-    <ul id="notes"></ul>
-    <div class="actions">
-      <button type="button" id="download-file">Download cleaned file</button>
-    </div>
-  </section>
+    <section class="pane" aria-live="polite">
+      <h2>Result</h2>
+      <p id="error" class="error" role="alert" hidden></p>
+      <p id="empty" class="placeholder">The cleaned result appears here.</p>
+      <p id="verdict" hidden></p>
+      <div id="text-result" hidden>
+        <pre id="preview"></pre>
+        <p class="hint">Red marks show what was removed from the input.</p>
+        <div class="actions">
+          <button type="button" id="copy">Copy cleaned text</button>
+          <button type="button" id="download-text">Download</button>
+        </div>
+      </div>
+      <div id="file-result" hidden>
+        <p id="file-summary" class="hint"></p>
+        <ul id="notes"></ul>
+        <div class="actions">
+          <button type="button" id="download-file">Download cleaned file</button>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <footer>
     <a href="./about.html">About and credits</a> ·
