@@ -70,7 +70,10 @@ From the PR list of xpath-to-class-chain (no deep review, by decision).
   - Size limit 50 MB per file; one file at a time.
 - Out: `.doc/.xls/.ppt` (rejected with a message), macro and template variants, images, audio, video, Layer B
   (statistical watermarks), batch processing.
-- Backlog after v1, in this order: (1) PDF feasibility spike in Pyodide with a go / no-go note; (2) visible
+- Backlog after v1, in this order: (1) golden snapshots for text / DOCX / XLSX / PPTX (fixed inputs: Russian text with
+  a no-break space, astral characters, invisible characters; expected output kept in the repository, a difference
+  fails the test and shows the diff), to be done before the first upstream bump PR is merged, since that is when quiet
+  behaviour changes start to matter; (2) PDF feasibility spike in Pyodide with a go / no-go note; (3) visible
   typography cleanup (dashes, quotes) as an option, off by default, not based on upstream `humanize_pass.py`.
 
 ## Architecture
@@ -95,13 +98,13 @@ cost little window but take wall time). Each stage needs a "yes" before it start
 | --- | --- | --- | --- | --- | --- |
 | 0 | Kickoff | PLAN.md, CLAUDE.md, public repo, plan PR | ≈15 min | ≈6 % | done |
 | 1 | Engine in Node | submodule at v0.7.0, `adapter/engine.py`, Pyodide smoke test in Node (text + one DOCX / XLSX / PPTX), defaults as above, `docs/known-issues.md` | ≈45 min | ≈15 % | done |
-| 2 | MVP PWA | Vite + TS app, worker, self-hosted Pyodide, paste / upload / download, red-marked preview, report, About with credits, CSP, offline service worker, Pages deploy workflow, one Playwright e2e on the build | ≈1.5 h | ≈30 % | in review |
-| 3 | CI, tests and release watch | CI on PRs (smoke, golden snapshots for text / DOCX / XLSX / PPTX, e2e: offline, zero network after load, valid ZIP), patches check, monthly workflow that opens a PR when upstream has a new release tag | ≈1.5 h | ≈30 % | planned |
+| 2 | MVP PWA | Vite + TS app, worker, self-hosted Pyodide, paste / upload / download, red-marked preview, report, About with credits, CSP, offline service worker, Pages deploy workflow, one Playwright e2e on the build | ≈1.5 h | ≈30 % | done |
+| 3 | CI, tests and release watch (cheaper path chosen 2026-10-29) | CI on PRs (smoke, e2e: offline, zero network after load including the worker, valid ZIP), patches check, monthly workflow that opens a PR when upstream has a new release tag. Golden snapshots moved to the backlog | ≈1 h | ≈20 % | planned |
 | 4 | Real-file check | my own files through the deployed page; findings sorted into fixes and backlog | ≈30 min | ≈10 % | planned |
-| | Total | | ≈4.5 h over 3–4 sessions | ≈90 % of one window | |
+| | Total | | ≈4 h over 3–4 sessions | ≈80 % of one window | |
 
-Cheaper path: drop the golden snapshots in stage 3 (keep smoke + e2e; a bump PR then shows breakage but not quiet
-behaviour changes) and skip stage 4 (≈−25 % of a window).
+Cheaper path, taken for stage 3: no golden snapshots (smoke + e2e only; a bump PR then shows breakage but not quiet
+behaviour changes). Further saving: skip stage 4 (≈−10 % of a window).
 
 Optional, not planned: LibreOffice headless check that cleaned files open without a repair prompt.
 
@@ -118,6 +121,7 @@ Optional, not planned: LibreOffice headless check that cleaned files open withou
 | 2026-10-29 | Inputs: DOCX / XLSX / PPTX, pasted text, plain-text files; 50 MB limit | personal use | user |
 | 2026-10-29 | No `publishing` plugin; site at domovou69.github.io/ai-marks-cleaner | personal use only | user |
 | 2026-10-29 | Kit skill for upstream wrappers deferred until after stage 3 | write the recipe from a working example | user |
+| 2026-10-29 | Stage 3 on the cheaper path: golden snapshots moved to the backlog (first item, before the first upstream bump is merged) | saves ≈10 % of a window; smoke + e2e already catch breakage | user |
 
 ## Risks and limits
 
