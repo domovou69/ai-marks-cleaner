@@ -25,7 +25,7 @@ table) in TypeScript and keep upstream for OOXML only. Not planned.
 
 - Goal: one page where I paste text or drop an Office file and get it back without invisible Unicode carriers and
   provenance metadata, with a visual diff of what was removed.
-- If v1 works on real files: the typography option (backlog 3). Golden snapshots (backlog 1) and the PDF spike (backlog 2, verdict go, [docs/pdf-spike.md](docs/pdf-spike.md)) are done; PDF support is a proposed stage 6.
+- If v1 works on real files: the typography option (backlog 3). Golden snapshots (backlog 1) and the PDF spike (backlog 2, verdict go for the marks tested; image metadata and Word / Acrobat files are untested, [docs/pdf-spike.md](docs/pdf-spike.md)) are done; PDF support is a proposed stage 6.
 - If upstream renames its internals: the smoke test fails on the bump PR; fix `adapter/engine.py` or add a patch.
 
 ## Constraints
@@ -102,7 +102,7 @@ cost little window but take wall time). Each stage needs a "yes" before it start
 | 3 | CI, tests and release watch (cheaper path chosen 2026-10-29) | CI on PRs (smoke, e2e: offline, zero network after load including the worker, valid ZIP), patches check, monthly workflow that opens a PR when upstream has a new release tag. Golden snapshots moved to the backlog | ≈1 h | ≈20 % | done |
 | 4 | Real-file check | generated files with every kind of mark (`tests/real-check/`) through the deployed page; one fix PR, rest in `docs/known-issues.md` #7–#17 | ≈50 min | ≈15 % | done (PR #12, #13) |
 | 5 | Golden snapshots | `tests/golden/`: the stage 4 inputs go through `adapter/engine.py` in Pyodide; text, report notes, part list and changed XML parts are kept in `tests/golden/expected/`; a difference fails with a diff; wired into CI and `pages.yml` | ≈50 min | ≈15 % | done |
-| 6 | PDF support (proposed, not started; needs a "yes") | `adapter/pdf.py` on pypdf, wheel and license in the bundle, UI accepts `.pdf`, fixtures, golden snapshots, smoke and e2e cases; details in `docs/pdf-spike.md`. Image pass is an optional +≈40 min | ≈1.5 h | ≈25 % | proposed |
+| 6 | PDF support (proposed, not started; needs a "yes") | `adapter/pdf.py` on pypdf, wheel and license in the bundle, UI accepts `.pdf`, fixtures, golden snapshots, smoke and e2e cases; details in `docs/pdf-spike.md`. Image pass is an optional +≈40 min, +≈10 % | ≈1.5 h | ≈25 % | proposed |
 | | Total (stages 0–5) | | ≈4 h over 3–4 sessions | ≈80 % of one window | |
 
 Cheaper path, taken for stage 3: no golden snapshots (smoke + e2e only; a bump PR then shows breakage but not quiet
@@ -128,7 +128,7 @@ Optional, not planned: LibreOffice headless check that cleaned files open withou
 | 2026-10-29 | Stage 4 on generated files (the user has no sample files); one "full" and one "clean" file per type, no large-file or limit checks | covers every mark type and the legitimate Russian text without redundancy; large files cost tokens | user |
 | 2026-10-29 | Release watch runs monthly (cron `0 6 1 * *`), not every exact 30 days; it dispatches CI on the bump branch | cron has no "every 30 days"; PRs opened with the default token do not start `pull_request` workflows | proposed |
 | 2026-10-29 | Golden snapshots compare normalised slices (timestamps masked, XML one tag per line, images by structure), not bytes | the Office libraries stamp the current time: two generator runs give different DOCX / XLSX / PPTX bytes (only the text inputs are identical) | user |
-| 2026-10-29 | PDF spike: go, but with our own cleaner on pypdf, not the upstream PDF path; hidden text (render mode 3, white) is reported, not removed; encrypted PDFs are rejected | upstream relies on exiftool, qpdf and Ghostscript and in Pyodide leaves Info, attachments and text untouched; render mode 3 is the OCR layer of scanned files | proposed (spike result), stage 6 awaits the user |
+| 2026-10-29 | PDF spike: go, but with our own cleaner on pypdf, not the upstream PDF path; hidden text (render mode 3, white) is reported, not removed; password-protected PDFs are rejected, signed ones are refused or flagged | upstream relies on exiftool, qpdf and Ghostscript and in Pyodide leaves Info, attachments and text untouched; render mode 3 is the OCR layer of scanned files | proposed (spike result), stage 6 awaits the user |
 
 ## Risks and limits
 

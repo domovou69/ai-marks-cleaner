@@ -4,6 +4,8 @@ Question: can the page clean a PDF in the browser, in Pyodide, with no network?
 
 **Verdict: GO, with our own cleaner on [pypdf](https://github.com/py-pdf/pypdf), not with the upstream PDF path.**
 Estimated implementation stage: ≈1.5 h wall, ≈25 % of one 5-hour window (≈2.2 h, ≈35 % with the image pass).
+Not yet known: metadata inside embedded images (the likely home of real AI provenance in a PDF) and files from Word /
+Acrobat; see "Open". "Go" means the approach works on the marks tested, not that every mark is covered.
 
 Spike date 2026-10-29. Pyodide 314.0.7 (Python 3.14) in Node, upstream v0.7.0, pypdf 6.21.4. Test files were
 generated (no real AI-made PDFs available), see "What was tested".
@@ -19,7 +21,7 @@ Run in Pyodide on the generated files, the upstream path gave:
 
 | Mark | Removed by upstream in Pyodide |
 | --- | --- |
-| XMP packet (document and page) | yes, blanked (it scans raw bytes, so a Flate-compressed XMP stream would be missed; not tested) |
+| XMP packet (document and page) | partly: blanked when stored uncompressed; it scans raw bytes, so a Flate-compressed XMP stream would be missed (not tested) |
 | Info dictionary (`Author` ChatGPT, `Creator`, custom key) | **no** |
 | Embedded files (`/EmbeddedFiles`, `FileAttachment` annotations) | **no** |
 | Annotation author (`/T`) and text | **no** |
@@ -61,7 +63,9 @@ catalog keys survive. A Quick Look (PDFKit) render of the cleaned file is pixel-
   stream, with the carriers, in the file.
 - Only parse content streams for pages that have a font mapping some code to a carrier (precheck on `/ToUnicode`).
   Parsing costs ≈20 ms per text page: 215 pages took 4.3 s with the parse, 66 ms without it. Hidden-text detection
-  needs the parse, so it is either an option or limited to pages that pass the precheck.
+  needs the parse, so it is either an option or limited to pages that pass the precheck. When it is skipped, the
+  report must say "hidden text not checked", never stay silent: no warning must not read as "none present". The
+  pypdf cleaner drops `/Metadata` whatever its encoding, but no fixture has a compressed XMP stream yet (add one).
 
 ## Does it run in Pyodide
 
@@ -70,11 +74,11 @@ catalog keys survive. A Quick Look (PDFKit) render of the cleaned file is pixel-
 | pypdf in Pyodide | pure Python, no native part; the wheel is put on `sys.path` (zipimport), no micropip, no network |
 | Added to the bundle | pypdf wheel 410 KB (≈4 % of the ≈10 MB Pyodide payload); loaded only when a PDF is chosen |
 | Import time | ≈0.6 s cold (Node, Apple silicon) |
-| Time, 37 KB / 1 MB / 5 MB / 37 MB PDF | 15 ms / 53 ms / 125 ms / 234 ms (images dominate; they are copied, not decoded) |
+| Time, 38 KB / 1 MB / 5 MB / 37 MB PDF | 15 ms / 53 ms / 125 ms / 234 ms (images dominate; they are copied, not decoded) |
 | Time, 263 KB text PDF, 215 pages | 4.3 s with hidden-text detection, 66 ms without it |
-| Memory, 37 MB PDF | peak RSS ≈580 MB for the whole Node process (≈200 MB before the file); Pyodide heap 193 MB. ≈10× the file, in line with Office files (known-issues #17) |
+| Memory, 37 MB PDF | Node process RSS rose from ≈200 MB to ≈580 MB (≈10× the file); Pyodide heap 193 MB (≈5×). More than the ≈3× assumed for Office files (known-issues #17). Near the 50 MB limit expect ≈0.5–0.8 GB: check it in the stage, and consider a lower limit for PDF |
 | Output size | +1–2 KB (objects are written uncompressed; no linearization) |
-| Encrypted PDF | needs `cryptography` (+ `cffi`, `pycparser`, `six`, ≈2.4 MB) for AES. Not worth it: reject with a clear message |
+| Encrypted PDF | AES needs `cryptography` (+ `cffi`, `pycparser`, `six`, ≈2.4 MB). Proposal for v1: do not ship it; try an empty user password (RC4 works without it) and reject with a clear message when a password is needed or AES is used. Owner-password-only AES files (copy / print restrictions) are common, so this will turn some files away: decide at the stage whether 2.4 MB is worth it. Not tested |
 | Licenses | pypdf is BSD-3-Clause: ship its license, add a THIRD_PARTY_NOTICES row |
 
 Upstream's own PDF code (`container_meta.py`) already imports in Pyodide (it did for DOCX / XLSX / PPTX); only its
@@ -82,7 +86,7 @@ external programs are missing.
 
 ## What was tested
 
-- Generated with reportlab + pypdf: three files of 38 KB, 1 MB, 5 MB and one of 37 MB, each with Info, document and
+- Generated with reportlab + pypdf: four files of 38 KB, 1 MB, 5 MB and 37 MB, each with Info, document and
   page XMP, a name-tree attachment, a `FileAttachment` annotation, a zero-width space inside visible text, a
   render-mode-3 run and a white-on-white run; plus a copy with an incremental update and an outline.
 - Generated with Chromium's PDF printer (Skia, Type0 fonts with `/ToUnicode`): 2 pages and 215 pages. Chromium
@@ -101,7 +105,9 @@ external programs are missing.
 3. **Files from real producers.** Word, Acrobat and Google Docs PDFs use object streams and cross-reference
    streams; pypdf reads them, but the spike had none. The cleaned file was not opened in Acrobat / Preview as a
    user (Quick Look only).
-4. **Digital signatures.** A signed PDF is rewritten, so the signature becomes invalid. Say so in the report, or refuse.
+4. **Digital signatures.** A signed PDF is rewritten, so the signature becomes invalid: a silently wrong result if
+   the page shows plain success. The stage must detect a signature (`/Sig` field, `/ByteRange`) before cleaning and
+   either refuse or warn prominently; detection is part of stage step 1, not optional.
 5. **Forms, tagged PDF, JavaScript.** Cloned as they are; not checked individually.
 
 ## Proposed stage (after "yes")
@@ -109,7 +115,8 @@ external programs are missing.
 Not part of this PR. Order of work:
 
 1. `adapter/pdf.py`: the pypdf cleaner above, called from `engine.clean_file` for `.pdf`; notes in the same shape as the
-   Office ones. `engine.py` stays the only file that imports upstream.
+   Office ones, with signature and encryption detection before any cleaning. `engine.py` stays the only file that
+   imports upstream.
 2. Bundle: copy the pypdf wheel and its license in `prepare-assets.mjs`; lazy-load on first PDF; THIRD_PARTY_NOTICES row.
 3. UI: accept `.pdf`; report lists what was removed and what was only seen (hidden text, signature, images left);
    message for encrypted and damaged files (shares the text of known-issues #12).
